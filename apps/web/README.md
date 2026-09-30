@@ -9,6 +9,17 @@ npm install
 npm run dev
 ```
 
+## Supabase OAuth setup
+
+Set these Vite variables in `apps/web/.env.local` using your Supabase project URL and publishable anon key:
+
+```sh
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
+```
+
+Never put a Supabase service-role key in the browser app. The login page currently uses Supabase Auth's Google OAuth provider, then returns to `/`. Enable Google in Supabase Authentication provider settings and add your app's origin/return URL to the Supabase Auth redirect URL allow-list. For local development the callback is `http://localhost:3000/`.
+
 # Building For Production
 
 To build this application for production:

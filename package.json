@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/snub-yeah/Flashcardz/issues"
   },
-  "homepage": "https://github.com/snub-yeah/Flashcardz#readme"
+  "homepage": "https://github.com/snub-yeah/Flashcardz#readme",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14"
+  }
 }

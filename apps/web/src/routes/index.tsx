@@ -1,13 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	Anchor,
-	AppShell,
-	Button,
-	Group,
-	Stack,
-	Text,
-	Title,
-} from "@mantine/core";
+import { Button, Group, Stack, Title } from "@mantine/core";
 
 export const Route = createFileRoute("/")({ component: App });
 

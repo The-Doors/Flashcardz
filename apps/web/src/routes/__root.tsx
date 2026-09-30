@@ -1,14 +1,16 @@
+import { Anchor, AppShell, MantineProvider, Text } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import {
+	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
-	createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { Anchor, AppShell, MantineProvider, Text } from "@mantine/core";
-import { theme } from "../theme";
-
-import appCss from "../styles.css?url";
+import "@mantine/notifications/styles.css";
 
 import type { QueryClient } from "@tanstack/react-query";
+
+import appCss from "../styles.css?url";
+import { theme } from "../theme";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -46,6 +48,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<MantineProvider theme={theme}>
+					<Notifications position="top-right" />
 					<AppShell header={{ height: 60 }}>
 						<AppShell.Header
 							px="md"

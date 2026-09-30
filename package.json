@@ -1,0 +1,25 @@
+{
+	"name": "flashcardz",
+	"version": "1.0.0",
+	"description": "(WIP) Don't worry about it",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev-web": "npm run generate-routes --prefix apps/web && npm run dev --prefix apps/web"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/snub-yeah/Flashcardz.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"bugs": {
+		"url": "https://github.com/snub-yeah/Flashcardz/issues"
+	},
+	"homepage": "https://github.com/snub-yeah/Flashcardz#readme",
+	"devDependencies": {
+		"@biomejs/biome": "2.5.14"
+	}
+}

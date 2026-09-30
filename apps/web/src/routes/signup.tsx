@@ -18,25 +18,33 @@ import { useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 import { supabase } from "../lib/supabase";
 
-export const Route = createFileRoute("/login")({
-	component: LoginPage,
+export const Route = createFileRoute("/signup")({
+	component: SignupPage,
 });
 
-function LoginPage() {
+function SignupPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [message, setMessage] = useState<string | null>(null);
 
-	function showError(message: string) {
+	function showError(errorMessage: string) {
 		notifications.show({
-			title: "Sign-in failed",
-			message,
+			title: "Account creation failed",
+			message: errorMessage,
 			color: "red",
 			duration: 5000,
 		});
 	}
 
-	async function signInWithEmail(event: React.FormEvent<HTMLFormElement>) {
+	async function createAccount(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		setMessage(null);
+
+		if (password !== confirmPassword) {
+			showError("Passwords do not match.");
+			return;
+		}
 		if (!supabase) {
 			showError(
 				"Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
@@ -44,11 +52,16 @@ function LoginPage() {
 			return;
 		}
 
-		const { error: signInError } = await supabase.auth.signInWithPassword({
+		const { data, error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
+			options: { emailRedirectTo: `${window.location.origin}/` },
 		});
-		if (signInError) showError(signInError.message);
+		if (signUpError) {
+			showError(signUpError.message);
+		} else if (!data.session) {
+			setMessage("Check your email to confirm your account.");
+		}
 	}
 
 	async function signInWithGoogle() {
@@ -61,11 +74,8 @@ function LoginPage() {
 
 		const { error: signInError } = await supabase.auth.signInWithOAuth({
 			provider: "google",
-			options: {
-				redirectTo: `${window.location.origin}/`,
-			},
+			options: { redirectTo: `${window.location.origin}/` },
 		});
-
 		if (signInError) showError(signInError.message);
 	}
 
@@ -80,9 +90,9 @@ function LoginPage() {
 							style={{ flex: "1 1 360px" }}
 						>
 							<Stack align="center" gap={4}>
-								<Title order={2}>Sign in</Title>
+								<Title order={2}>Create account</Title>
 							</Stack>
-							<form onSubmit={signInWithEmail}>
+							<form onSubmit={createAccount}>
 								<Stack gap="md">
 									<TextInput
 										label="Email"
@@ -98,13 +108,21 @@ function LoginPage() {
 										value={password}
 										onChange={(event) => setPassword(event.currentTarget.value)}
 									/>
+									<PasswordInput
+										label="Confirm password"
+										required
+										value={confirmPassword}
+										onChange={(event) =>
+											setConfirmPassword(event.currentTarget.value)
+										}
+									/>
 									<Button type="submit" fullWidth>
-										Sign in
+										Create account
 									</Button>
 								</Stack>
 							</form>
 							<Text size="sm" ta="center">
-								New here? <Link to="/signup">Create an account</Link>
+								Already have an account? <Link to="/login">Sign in</Link>
 							</Text>
 							<Divider label="Or continue with" labelPosition="center" />
 							<Button
@@ -119,6 +137,11 @@ function LoginPage() {
 						<Image src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/James_D._Rolfe.jpg/250px-James_D._Rolfe.jpg" />
 					</SimpleGrid>
 				</Paper>
+				{message && (
+					<Text c="green" role="status" ta="center">
+						{message}
+					</Text>
+				)}
 				<Text c="dimmed" size="sm" ta="center">
 					By continuing, you agree to our{" "}
 					<Anchor href="/terms">Terms of Service</Anchor> and{" "}

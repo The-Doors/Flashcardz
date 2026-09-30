@@ -1,40 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Cuneiform&display=swap');
-@import '@mantine/core/styles.css';
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Cuneiform&display=swap");
+@import "@mantine/core/styles.css";
 
 :root {
-  --surface: #fdfcfc;
-  --surface-raised: #f8f9fa;
-  --surface-sunken: #f1f3f5;
-  --hairline: #dee2e6;
-  --text: #212529;
-  --text-muted: #6c757d;
-  --accent: #f8a32d;
-  --accent-hover: #faab42;
-  --success: #2f9e44;
-  --warning: #f06400;
-  --danger: #ab1919;
-  --info: #1971c2;
+	--surface: #fdfcfc;
+	--surface-raised: #f8f9fa;
+	--surface-sunken: #f1f3f5;
+	--hairline: #dee2e6;
+	--text: #212529;
+	--text-muted: #6c757d;
+	--accent: #f8a32d;
+	--accent-hover: #faab42;
+	--success: #2f9e44;
+	--warning: #f06400;
+	--danger: #ab1919;
+	--info: #1971c2;
 
-  --mantine-font-family: 'Noto Sans Cuneiform', sans-serif;
-  --mantine-font-family-headings: 'Noto Sans Cuneiform', sans-serif;
-  --mantine-color-body: var(--surface);
-  --mantine-color-text: var(--text);
-  --mantine-color-default: var(--surface);
-  --mantine-color-default-hover: var(--surface-raised);
-  --mantine-color-default-border: var(--hairline);
-  --mantine-color-dimmed: var(--text-muted);
-  --mantine-primary-color-filled: var(--accent);
-  --mantine-primary-color-filled-hover: var(--accent-hover);
+	--mantine-font-family: "Noto Sans Cuneiform", sans-serif;
+	--mantine-font-family-headings: "Noto Sans Cuneiform", sans-serif;
+	--mantine-color-body: var(--surface);
+	--mantine-color-text: var(--text);
+	--mantine-color-default: var(--surface);
+	--mantine-color-default-hover: var(--surface-raised);
+	--mantine-color-default-border: var(--hairline);
+	--mantine-color-dimmed: var(--text-muted);
+	--mantine-primary-color-filled: var(--accent);
+	--mantine-primary-color-filled-hover: var(--accent-hover);
 }
 
 html,
 body,
 #app {
-  min-height: 100%;
+	min-height: 100%;
 }
 
 body {
-  margin: 0;
-  color: var(--text);
-  background: var(--surface);
+	margin: 0;
+	color: var(--text);
+	background: var(--surface);
 }

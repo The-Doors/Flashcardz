@@ -1,4 +1,3 @@
-
 name: Build and Deploy
 
 on:
@@ -31,7 +30,8 @@ jobs:
       - name: Build and push React
         uses: docker/build-push-action@v6
         with:
-          context: ./apps/web
+          context: .                           # Set context to repository root
+          file: ./apps/web/Dockerfile          # Explicitly point to the frontend Dockerfile
           push: true
           tags: |
             ghcr.io/amillionhornets/flashcardz-frontend:latest
@@ -40,7 +40,8 @@ jobs:
       - name: Build and push FastAPI
         uses: docker/build-push-action@v6
         with:
-          context: ./apps/api
+          context: .                           # Set context to repository root
+          file: ./apps/api/Dockerfile          # Explicitly point to the backend Dockerfile
           push: true
           tags: |
             ghcr.io/amillionhornets/flashcardz-backend:latest

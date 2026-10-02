@@ -31,7 +31,8 @@ jobs:
       - name: Build and push React
         uses: docker/build-push-action@v6
         with:
-          context: ./apps/web
+          context: .
+          file: ./apps/web/Dockerfile
           push: true
           tags: |
             ghcr.io/amillionhornets/flashcardz-frontend:latest

@@ -1,20 +1,15 @@
 # Build stage
 FROM node:22-alpine AS build
 
-WORKDIR /app
+WORKDIR /app/apps/web
 
-# Copy root package files
-COPY package*.json ./
-
-# Copy web app package files into apps/web
-COPY apps/web/package*.json ./apps/web/
-
-RUN npm install
+# Install from the web app lockfile for reproducible builds.
+COPY apps/web/package*.json ./
+RUN npm ci
 
 # Copy remaining source files
-COPY apps/web ./apps/web
+COPY apps/web ./
 
-WORKDIR /app/apps/web
 RUN npm run build
 
 # Production stage

@@ -1,25 +1,18 @@
 # Build stage
 FROM node:22-alpine AS build
 
-# Set working directory to the repo root inside the container
-WORKDIR /app
-
-# Copy root package files if present
-COPY package*.json ./
-
-# Copy web app package files into apps/web/
-COPY apps/web/package*.json ./apps/web/
-
-# Install dependencies inside apps/web
 WORKDIR /app/apps/web
+
+# Copy package files for web app
+COPY apps/web/package*.json ./
+
+# Install dependencies inside /app/apps/web
 RUN npm install
 
-# Copy all source files relative to repo root
-WORKDIR /app
-COPY apps/web/ ./apps/web/
+# Copy web app source files
+COPY apps/web/ ./
 
-# Build the web app
-WORKDIR /app/apps/web
+# Build the app (outputs to /app/apps/web/dist)
 RUN npm run build
 
 # Production stage

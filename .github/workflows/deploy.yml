@@ -30,8 +30,23 @@ jobs:
       - name: Build and push React
         uses: docker/build-push-action@v6
         with:
-          context: .                           # Set context to repository root
-          file: ./apps/web/Dockerfile          # Explicitly point to the frontend Dockerfile
+          context: .
+          file: ./apps/web/Dockerfile
+          target: web
+          push: true
+          build-args: |
+            VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY }}
+          tags: |
+            ghcr.io/amillionhornets/flashcardz-web:latest
+            ghcr.io/amillionhornets/flashcardz-web:${{ github.sha }}
+
+      - name: Build and push Nginx
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          target: proxy
           push: true
           tags: |
             ghcr.io/amillionhornets/flashcardz-frontend:latest
@@ -40,8 +55,8 @@ jobs:
       - name: Build and push FastAPI
         uses: docker/build-push-action@v6
         with:
-          context: .                           # Set context to repository root
-          file: ./apps/api/Dockerfile          # Explicitly point to the backend Dockerfile
+          context: ./apps/api
+          file: ./apps/api/Dockerfile
           push: true
           tags: |
             ghcr.io/amillionhornets/flashcardz-backend:latest

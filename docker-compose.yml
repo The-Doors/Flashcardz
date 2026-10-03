@@ -1,16 +1,21 @@
 services:
   frontend:
     image: ghcr.io/amillionhornets/flashcardz-frontend:latest
-    container_name: react-frontend
     ports:
       - "80:80"
     depends_on:
+      - web
       - backend
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/amillionhornets/flashcardz-web:latest
+    expose:
+      - "3000"
     restart: unless-stopped
 
   backend:
     image: ghcr.io/amillionhornets/flashcardz-backend:latest
-    container_name: fastapi-backend
     env_file:
       - .env
     expose:

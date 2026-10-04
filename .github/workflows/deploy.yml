@@ -27,25 +27,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase repository owner
+        id: owner
+        run: echo "OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push React
         uses: docker/build-push-action@v6
         with:
-          context: .                           # Set context to repository root
+          context: .                          # Set context to repository root
           file: ./apps/web/Dockerfile          # Explicitly point to the frontend Dockerfile
           push: true
           tags: |
-            ghcr.io/amillionhornets/flashcardz-frontend:latest
-            ghcr.io/amillionhornets/flashcardz-frontend:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-frontend:latest
+            ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-frontend:${{ github.sha }}
 
       - name: Build and push FastAPI
         uses: docker/build-push-action@v6
         with:
-          context: .                           # Set context to repository root
+          context: .                          # Set context to repository root
           file: ./apps/api/Dockerfile          # Explicitly point to the backend Dockerfile
           push: true
           tags: |
-            ghcr.io/amillionhornets/flashcardz-backend:latest
-            ghcr.io/amillionhornets/flashcardz-backend:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-backend:latest
+            ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-backend:${{ github.sha }}
 
   deploy:
     needs: build

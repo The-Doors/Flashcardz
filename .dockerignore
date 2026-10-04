@@ -1,0 +1,11 @@
+**/node_modules
+**/.output
+**/.nitro
+**/.tanstack
+**/dist
+**/.venv
+**/__pycache__
+**/.env
+**/.env.*
+.git
+.crush

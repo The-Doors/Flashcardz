@@ -9,13 +9,13 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/{{ steps.owner.outputs.OWNER }}/flashcardz-web:latest
+    image: ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-web:latest
     expose:
       - "3000"
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/{{ steps.owner.outputs.OWNER }}/flashcardz-backend:latest
+    image: ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-backend:latest
     env_file:
       - .env
     expose:

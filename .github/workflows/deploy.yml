@@ -37,6 +37,7 @@ jobs:
           context: .
           file: ./apps/web/Dockerfile
           target: web
+          platforms: linux/arm64
           push: true
           build-args: |
             VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}
@@ -51,6 +52,7 @@ jobs:
           context: .
           file: ./apps/web/Dockerfile
           target: proxy
+          platforms: linux/arm64
           push: true
           tags: |
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-frontend:latest
@@ -61,6 +63,7 @@ jobs:
         with:
           context: ./apps/api
           file: ./apps/api/Dockerfile
+          platforms: linux/arm64
           push: true
           tags: |
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-backend:latest

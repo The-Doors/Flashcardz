@@ -37,7 +37,7 @@ function SignupPage() {
 		});
 	}
 
-	async function createAccount(event: React.FormEvent<HTMLFormElement>) {
+	async function createAccount(event: SubmitEvent) {
 		event.preventDefault();
 		setMessage(null);
 
@@ -55,7 +55,7 @@ function SignupPage() {
 		const { data, error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
-			options: { emailRedirectTo: `${window.location.origin}/` },
+			options: { emailRedirectTo: `${window.location.origin}/auth-callback` },
 		});
 		if (signUpError) {
 			showError(signUpError.message);
@@ -74,7 +74,7 @@ function SignupPage() {
 
 		const { error: signInError } = await supabase.auth.signInWithOAuth({
 			provider: "google",
-			options: { redirectTo: `${window.location.origin}/` },
+			options: { redirectTo: `${window.location.origin}/auth-callback` },
 		});
 		if (signInError) showError(signInError.message);
 	}

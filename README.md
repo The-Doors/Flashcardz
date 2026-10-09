@@ -17,15 +17,18 @@ Prerequisites:
 
 ```
 cd apps/api
-uv run fastapi dev src/main.py
+uv run fastapi dev src/main.py --app app
 ```
 
 ### Web
 
+You first have to install web dependencies. Then, while the back end is running, run `npm run dev-web`. This will generate routes and the Orval types to call the backend
+
 ```
 cd apps/web
 npm install
-npm run dev
+cd ../..
+npm run dev-web
 ```
 
 ### Supabase

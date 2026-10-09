@@ -2,10 +2,10 @@
 
 ## Setup
 
-Install `uv`, then run 
+Install `uv`, copy `.env.example` to `.env`, and configure all the env vars you need, then run
 
 ```sh
-uv run fastapi dev src/main.py
+uv run fastapi dev src/main.py --app app
 ```
 
 ## Database

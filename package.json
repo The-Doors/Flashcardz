@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"dev-web": "npm run generate-routes --prefix apps/web && npm run dev --prefix apps/web"
+		"dev-web": "npm run generate-routes --prefix apps/web && npm run generate-api --prefix apps/web && npm run dev --prefix apps/web"
 	},
 	"repository": {
 		"type": "git",

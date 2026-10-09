@@ -8,11 +8,15 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
-const config = defineConfig({
+const config = defineConfig(({ command }) => ({
 	resolve: { tsconfigPaths: true },
 	plugins: [
 		devtools(),
 		nitro({
+			routeRules:
+				command === "serve"
+					? { "/api/**": { proxy: "http://127.0.0.1:8000/**" } }
+					: {},
 			rollupConfig: {
 				external: [/^@sentry\//],
 				onwarn(warning: RolldownLog, warn: (warning: RolldownLog) => void) {
@@ -24,6 +28,6 @@ const config = defineConfig({
 		tanstackStart(),
 		viteReact(),
 	],
-});
+}));
 
 export default config;

@@ -35,7 +35,7 @@ function LoginPage() {
 		});
 	}
 
-	async function signInWithEmail(event: React.FormEvent<HTMLFormElement>) {
+	async function signInWithEmail(event: SubmitEvent) {
 		event.preventDefault();
 		if (!supabase) {
 			showError(
@@ -48,6 +48,7 @@ function LoginPage() {
 			email,
 			password,
 		});
+		if (!signInError) window.location.assign("/auth-callback");
 		if (signInError) showError(signInError.message);
 	}
 
@@ -62,7 +63,7 @@ function LoginPage() {
 		const { error: signInError } = await supabase.auth.signInWithOAuth({
 			provider: "google",
 			options: {
-				redirectTo: `${window.location.origin}/`,
+				redirectTo: `${window.location.origin}/auth-callback`,
 			},
 		});
 

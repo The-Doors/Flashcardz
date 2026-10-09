@@ -1,4 +1,12 @@
-import { Alert, Button, Center, Stack, Text, TextInput, Title } from "@mantine/core";
+import {
+	Alert,
+	Button,
+	Center,
+	Stack,
+	Text,
+	TextInput,
+	Title,
+} from "@mantine/core";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createUser, readCurrentUser } from "../lib/api-lib";
@@ -30,15 +38,17 @@ function AuthCallbackPage() {
 			} = await supabase.auth.getSession();
 			if (!active) return;
 			if (sessionError || !session) {
-				setError("Sign-in could not be completed. Please return to login and try again.");
+				setError(
+					"Sign-in could not be completed. Please return to login and try again.",
+				);
 				setChecking(false);
 				return;
 			}
 			try {
 				const profile = await readCurrentUser(session.access_token);
 				if (active) setNeedsUsername(profile === null);
-      } catch (error) {
-        console.error(error);
+			} catch (error) {
+				console.error(error);
 				if (active) setError("Unable to check your profile. Refresh to retry.");
 			} finally {
 				if (active) setChecking(false);
@@ -63,13 +73,16 @@ function AuthCallbackPage() {
 			const {
 				data: { session },
 			} = await supabase.auth.getSession();
-			if (!session) throw new Error("Sign in to finish setting up your profile.");
+			if (!session)
+				throw new Error("Sign in to finish setting up your profile.");
 			await createUser(session.access_token, { username });
 			setNeedsUsername(false);
 			setCreated(true);
 		} catch (cause) {
 			setError(
-				cause instanceof Error ? cause.message : "Could not create your profile.",
+				cause instanceof Error
+					? cause.message
+					: "Could not create your profile.",
 			);
 		} finally {
 			setSubmitting(false);
@@ -84,7 +97,9 @@ function AuthCallbackPage() {
 				) : created ? (
 					<>
 						<Title order={2}>Account ready</Title>
-						<Button component={Link} to="/">Continue</Button>
+						<Button component={Link} to="/">
+							Continue
+						</Button>
 					</>
 				) : needsUsername ? (
 					<>

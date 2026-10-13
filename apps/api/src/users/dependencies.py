@@ -1,15 +1,31 @@
 from typing import Annotated
 from uuid import UUID
 
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status
 import httpx
-from fastapi import Header, HTTPException, status
 
 from src.config import get_settings
 
 
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
 async def get_authenticated_user_id(
-    authorization: Annotated[str | None, Header()] = None,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(bearer_scheme),
+    ],
 ) -> UUID:
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="A valid bearer token is required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    authorization = f"{credentials.scheme} {credentials.credentials}"
+
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

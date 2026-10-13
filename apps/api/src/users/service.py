@@ -7,16 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.users.models import User
 
 
-async def create_app_user(
-    session: AsyncSession, user_id: UUID, username: str
-) -> User:
+async def create_app_user(session: AsyncSession, user_id: UUID, username: str) -> User:
     existing = await session.get(User, user_id)
     if existing is not None:
         return existing
 
-    username_owner = await session.scalar(
-        select(User).where(User.username == username)
-    )
+    username_owner = await session.scalar(select(User).where(User.username == username))
     if username_owner is not None:
         raise ValueError("Username is already taken")
 

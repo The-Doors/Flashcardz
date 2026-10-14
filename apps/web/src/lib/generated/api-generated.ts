@@ -4,6 +4,27 @@
  * FastAPI
  * OpenAPI spec version: 0.1.0
  */
+export interface CardCreate {
+	/** @minLength 1 */
+	front: string;
+	/** @minLength 1 */
+	back: string;
+	public?: boolean;
+}
+
+export interface CardRead {
+	id: number;
+	front: string;
+	back: string;
+	version: number;
+	public: boolean;
+}
+
+export interface CardUpdate {
+	front?: string | null;
+	back?: string | null;
+}
+
 export type ValidationErrorCtx = { [key: string]: unknown };
 
 export interface ValidationError {
@@ -37,23 +58,13 @@ export type readCurrentUserUsersMeGetResponse200 = {
 	status: 200;
 };
 
-export type readCurrentUserUsersMeGetResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
-};
-
 export type readCurrentUserUsersMeGetResponseSuccess =
 	readCurrentUserUsersMeGetResponse200 & {
 		headers: Headers;
 	};
-export type readCurrentUserUsersMeGetResponseError =
-	readCurrentUserUsersMeGetResponse422 & {
-		headers: Headers;
-	};
 
 export type readCurrentUserUsersMeGetResponse =
-	| readCurrentUserUsersMeGetResponseSuccess
-	| readCurrentUserUsersMeGetResponseError;
+	readCurrentUserUsersMeGetResponseSuccess;
 
 export const getReadCurrentUserUsersMeGetUrl = () => {
 	return `/api/users/me`;
@@ -157,6 +168,226 @@ export const createUserUsersPost = async (
 		status: res.status,
 		headers: res.headers,
 	} as createUserUsersPostResponse;
+};
+
+export type createCardCardsPostResponse201 = {
+	data: CardRead;
+	status: 201;
+};
+
+export type createCardCardsPostResponse422 = {
+	data: HTTPValidationError;
+	status: 422;
+};
+
+export type createCardCardsPostResponseSuccess =
+	createCardCardsPostResponse201 & {
+		headers: Headers;
+	};
+export type createCardCardsPostResponseError =
+	createCardCardsPostResponse422 & {
+		headers: Headers;
+	};
+
+export type createCardCardsPostResponse =
+	| createCardCardsPostResponseSuccess
+	| createCardCardsPostResponseError;
+
+export const getCreateCardCardsPostUrl = () => {
+	return `/api/cards`;
+};
+
+/**
+ * @summary Create Card
+ */
+export const createCardCardsPost = async (
+	cardCreate: CardCreate,
+	options?: RequestInit,
+): Promise<createCardCardsPostResponse> => {
+	const getHeaders = (
+		h?: NonNullable<RequestInit["headers"]>,
+	): Record<string, string | readonly string[]> => {
+		if (!h) return {};
+		if (h instanceof Headers) return Object.fromEntries(h.entries());
+		if (Symbol.iterator in h) {
+			return Object.fromEntries(
+				Array.from(
+					h as Iterable<Iterable<string>>,
+					(entry) => Array.from(entry) as [string, string],
+				),
+			);
+		}
+		const headers: Record<string, string | readonly string[]> = {};
+		for (const [name, value] of Object.entries<
+			string | readonly string[] | undefined
+		>(h)) {
+			if (value !== undefined) headers[name] = value;
+		}
+		return headers;
+	};
+	const res = await fetch(getCreateCardCardsPostUrl(), {
+		...options,
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...getHeaders(options?.headers),
+		},
+		body: JSON.stringify(cardCreate),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: createCardCardsPostResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as createCardCardsPostResponse;
+};
+
+export type readCardCardsCardIdVersionGetResponse200 = {
+	data: CardRead;
+	status: 200;
+};
+
+export type readCardCardsCardIdVersionGetResponse422 = {
+	data: HTTPValidationError;
+	status: 422;
+};
+
+export type readCardCardsCardIdVersionGetResponseSuccess =
+	readCardCardsCardIdVersionGetResponse200 & {
+		headers: Headers;
+	};
+export type readCardCardsCardIdVersionGetResponseError =
+	readCardCardsCardIdVersionGetResponse422 & {
+		headers: Headers;
+	};
+
+export type readCardCardsCardIdVersionGetResponse =
+	| readCardCardsCardIdVersionGetResponseSuccess
+	| readCardCardsCardIdVersionGetResponseError;
+
+export const getReadCardCardsCardIdVersionGetUrl = (
+	cardId: number,
+	version: number,
+) => {
+	return `/api/cards/${cardId}/${version}`;
+};
+
+/**
+ * @summary Read Card
+ */
+export const readCardCardsCardIdVersionGet = async (
+	cardId: number,
+	version: number,
+	options?: RequestInit,
+): Promise<readCardCardsCardIdVersionGetResponse> => {
+	const res = await fetch(
+		getReadCardCardsCardIdVersionGetUrl(cardId, version),
+		{
+			...options,
+			method: "GET",
+		},
+	);
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: readCardCardsCardIdVersionGetResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as readCardCardsCardIdVersionGetResponse;
+};
+
+export type updateCardCardsCardIdVersionPatchResponse200 = {
+	data: CardRead;
+	status: 200;
+};
+
+export type updateCardCardsCardIdVersionPatchResponse422 = {
+	data: HTTPValidationError;
+	status: 422;
+};
+
+export type updateCardCardsCardIdVersionPatchResponseSuccess =
+	updateCardCardsCardIdVersionPatchResponse200 & {
+		headers: Headers;
+	};
+export type updateCardCardsCardIdVersionPatchResponseError =
+	updateCardCardsCardIdVersionPatchResponse422 & {
+		headers: Headers;
+	};
+
+export type updateCardCardsCardIdVersionPatchResponse =
+	| updateCardCardsCardIdVersionPatchResponseSuccess
+	| updateCardCardsCardIdVersionPatchResponseError;
+
+export const getUpdateCardCardsCardIdVersionPatchUrl = (
+	cardId: number,
+	version: number,
+) => {
+	return `/api/cards/${cardId}/${version}`;
+};
+
+/**
+ * @summary Update Card
+ */
+export const updateCardCardsCardIdVersionPatch = async (
+	cardId: number,
+	version: number,
+	cardUpdate: CardUpdate,
+	options?: RequestInit,
+): Promise<updateCardCardsCardIdVersionPatchResponse> => {
+	const getHeaders = (
+		h?: NonNullable<RequestInit["headers"]>,
+	): Record<string, string | readonly string[]> => {
+		if (!h) return {};
+		if (h instanceof Headers) return Object.fromEntries(h.entries());
+		if (Symbol.iterator in h) {
+			return Object.fromEntries(
+				Array.from(
+					h as Iterable<Iterable<string>>,
+					(entry) => Array.from(entry) as [string, string],
+				),
+			);
+		}
+		const headers: Record<string, string | readonly string[]> = {};
+		for (const [name, value] of Object.entries<
+			string | readonly string[] | undefined
+		>(h)) {
+			if (value !== undefined) headers[name] = value;
+		}
+		return headers;
+	};
+	const res = await fetch(
+		getUpdateCardCardsCardIdVersionPatchUrl(cardId, version),
+		{
+			...options,
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+				...getHeaders(options?.headers),
+			},
+			body: JSON.stringify(cardUpdate),
+		},
+	);
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: updateCardCardsCardIdVersionPatchResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as updateCardCardsCardIdVersionPatchResponse;
 };
 
 export type rootGetResponse200 = {

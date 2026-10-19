@@ -7,186 +7,182 @@
 export type ValidationErrorCtx = { [key: string]: unknown };
 
 export interface ValidationError {
-	loc: (string | number)[];
-	msg: string;
-	type: string;
-	input?: unknown;
-	ctx?: ValidationErrorCtx;
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+  input?: unknown;
+  ctx?: ValidationErrorCtx;
 }
 
 export interface HTTPValidationError {
-	detail?: ValidationError[];
+  detail?: ValidationError[];
 }
 
 export interface UserCreate {
-	/**
-	 * @minLength 1
-	 * @maxLength 50
-	 * @pattern ^\w+$
-	 */
-	username: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     * @pattern ^\w+$
+     */
+  username: string;
 }
 
 export interface UserRead {
-	id: string;
-	username: string;
+  id: string;
+  username: string;
 }
 
 export type readCurrentUserUsersMeGetResponse200 = {
-	data: UserRead;
-	status: 200;
-};
+  data: UserRead
+  status: 200
+}
 
 export type readCurrentUserUsersMeGetResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type readCurrentUserUsersMeGetResponseSuccess = (readCurrentUserUsersMeGetResponse200) & {
+  headers: Headers;
+};
+export type readCurrentUserUsersMeGetResponseError = (readCurrentUserUsersMeGetResponse422) & {
+  headers: Headers;
 };
 
-export type readCurrentUserUsersMeGetResponseSuccess =
-	readCurrentUserUsersMeGetResponse200 & {
-		headers: Headers;
-	};
-export type readCurrentUserUsersMeGetResponseError =
-	readCurrentUserUsersMeGetResponse422 & {
-		headers: Headers;
-	};
-
-export type readCurrentUserUsersMeGetResponse =
-	| readCurrentUserUsersMeGetResponseSuccess
-	| readCurrentUserUsersMeGetResponseError;
+export type readCurrentUserUsersMeGetResponse = (readCurrentUserUsersMeGetResponseSuccess | readCurrentUserUsersMeGetResponseError)
 
 export const getReadCurrentUserUsersMeGetUrl = () => {
-	return `/api/users/me`;
-};
+
+
+
+
+  return `/api/users/me`
+}
 
 /**
  * @summary Read Current User
  */
-export const readCurrentUserUsersMeGet = async (
-	options?: RequestInit,
-): Promise<readCurrentUserUsersMeGetResponse> => {
-	const res = await fetch(getReadCurrentUserUsersMeGetUrl(), {
-		...options,
-		method: "GET",
-	});
+export const readCurrentUserUsersMeGet = async ( options?: RequestInit): Promise<readCurrentUserUsersMeGetResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  const res = await fetch(getReadCurrentUserUsersMeGetUrl(),
+  {
+    ...options,
+    method: 'GET'
 
-	const data: readCurrentUserUsersMeGetResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as readCurrentUserUsersMeGetResponse;
-};
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: readCurrentUserUsersMeGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as readCurrentUserUsersMeGetResponse
+}
+
+
 
 export type createUserUsersPostResponse201 = {
-	data: UserRead;
-	status: 201;
-};
+  data: UserRead
+  status: 201
+}
 
 export type createUserUsersPostResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createUserUsersPostResponseSuccess = (createUserUsersPostResponse201) & {
+  headers: Headers;
+};
+export type createUserUsersPostResponseError = (createUserUsersPostResponse422) & {
+  headers: Headers;
 };
 
-export type createUserUsersPostResponseSuccess =
-	createUserUsersPostResponse201 & {
-		headers: Headers;
-	};
-export type createUserUsersPostResponseError =
-	createUserUsersPostResponse422 & {
-		headers: Headers;
-	};
-
-export type createUserUsersPostResponse =
-	| createUserUsersPostResponseSuccess
-	| createUserUsersPostResponseError;
+export type createUserUsersPostResponse = (createUserUsersPostResponseSuccess | createUserUsersPostResponseError)
 
 export const getCreateUserUsersPostUrl = () => {
-	return `/api/users`;
-};
+
+
+
+
+  return `/api/users`
+}
 
 /**
  * @summary Create User
  */
-export const createUserUsersPost = async (
-	userCreate: UserCreate,
-	options?: RequestInit,
-): Promise<createUserUsersPostResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Symbol.iterator in h) {
-			return Object.fromEntries(
-				Array.from(
-					h as Iterable<Iterable<string>>,
-					(entry) => Array.from(entry) as [string, string],
-				),
-			);
-		}
-		const headers: Record<string, string | readonly string[]> = {};
-		for (const [name, value] of Object.entries<
-			string | readonly string[] | undefined
-		>(h)) {
-			if (value !== undefined) headers[name] = value;
-		}
-		return headers;
-	};
-	const res = await fetch(getCreateUserUsersPostUrl(), {
-		...options,
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
-		},
-		body: JSON.stringify(userCreate),
-	});
+export const createUserUsersPost = async (userCreate: UserCreate, options?: RequestInit): Promise<createUserUsersPostResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCreateUserUsersPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(userCreate)
+  }
+)
 
-	const data: createUserUsersPostResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as createUserUsersPostResponse;
-};
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createUserUsersPostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createUserUsersPostResponse
+}
+
+
 
 export type rootGetResponse200 = {
-	data: unknown;
-	status: 200;
-};
+  data: unknown
+  status: 200
+}
 
-export type rootGetResponseSuccess = rootGetResponse200 & {
-	headers: Headers;
+export type rootGetResponseSuccess = (rootGetResponse200) & {
+  headers: Headers;
 };
+;
 
-export type rootGetResponse = rootGetResponseSuccess;
+export type rootGetResponse = (rootGetResponseSuccess)
 
 export const getRootGetUrl = () => {
-	return `/api/`;
-};
+
+
+
+
+  return `/api/`
+}
 
 /**
  * @summary Root
  */
-export const rootGet = async (
-	options?: RequestInit,
-): Promise<rootGetResponse> => {
-	const res = await fetch(getRootGetUrl(), {
-		...options,
-		method: "GET",
-	});
+export const rootGet = async ( options?: RequestInit): Promise<rootGetResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  const res = await fetch(getRootGetUrl(),
+  {
+    ...options,
+    method: 'GET'
 
-	const data: rootGetResponse["data"] = body ? JSON.parse(body) : {};
-	return { data, status: res.status, headers: res.headers } as rootGetResponse;
-};
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: rootGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as rootGetResponse
+}

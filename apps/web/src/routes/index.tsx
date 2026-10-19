@@ -9,7 +9,7 @@ function App() {
 		<Group justify="center" pt="sm">
 			<Stack>
 				<Title>Sup Bruh</Title>
-				<Button size="sm" onClick={() => navigate({ to: "/login" })}>
+				<Button size="sm" onClick={() => navigate({ to: "/Home" })}>
 					Login
 				</Button>
 			</Stack>

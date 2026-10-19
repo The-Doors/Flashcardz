@@ -368,7 +368,7 @@ function SideBar({ active, onNavigate, collapsed, onToggleCollapsed, activity }:
  */
 export default function AppLayout({
   children,
-  appName = "FlashDeck",
+  appName = "FlashCardz",
   active = "community",
   onNavigate,
   onSearch,

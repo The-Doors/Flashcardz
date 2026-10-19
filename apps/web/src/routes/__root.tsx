@@ -48,20 +48,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<MantineProvider theme={theme}>
-					<Notifications position="top-right" />
-					<AppShell header={{ height: 60 }}>
-						<AppShell.Header
-							px="md"
-							style={{ display: "flex", alignItems: "center" }}
-						>
-							<Anchor href="/" underline="never">
-								<Text fw={700} size="lg" c="var(--text)">
-									Flashcardz
-								</Text>
-							</Anchor>
-						</AppShell.Header>
-						<AppShell.Main>{children}</AppShell.Main>
-					</AppShell>
+                    <AppShell>
+                    <AppShell.Main>{children}</AppShell.Main>
+                    </AppShell>
 				</MantineProvider>
 				<Scripts />
 			</body>

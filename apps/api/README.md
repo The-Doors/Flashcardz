@@ -8,6 +8,14 @@ Install `uv`, copy `.env.example` to `.env`, and configure all the env vars you 
 uv run fastapi dev src/main.py --app app
 ```
 
+## Formatting
+
+Format the project with 
+
+```shell
+uvx ruff@0.17.0 format
+```
+
 ## Database
 
 Copy `.env.example` to `.env` and set `DATABASE_URL` to the PostgreSQL URL. For local Supabase, use the `DB_URL` printed by `supabase status` and change the scheme from `postgresql://` to `postgresql+asyncpg://`. Run the commands below from `apps/api` so `uv` uses this project and loads its `.env`.
@@ -23,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.users.models import User
+
 
 async def get_user(user_id, session: Annotated[AsyncSession, Depends(get_db)]):
     return await session.get(User, user_id)

@@ -3,9 +3,9 @@ from pathlib import Path
 
 from alembic import context
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
+from src.cards import models as card_models
 from src.config import get_settings
 from src.models import Base
 from src.users import models as user_models
@@ -33,6 +33,7 @@ def include_object(object, name, type_, reflected, compare_to):
         and object.table.name == "users"
         and object.referred_table.schema == "auth"
     )
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -73,7 +74,9 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = get_settings().database_url.replace("+asyncpg", "")
+    configuration["sqlalchemy.url"] = get_settings().database_url.replace(
+        "+asyncpg", ""
+    )
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

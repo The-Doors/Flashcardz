@@ -14,20 +14,25 @@ import {
   PanelLeftOpen,
   User,
   LogOut,
-  Flame,
 } from "lucide-react";
+import StudyHeatmap, { buildDemoActivity } from "./StudyHeatmap";
+import AuthModal from "./AuthModal";
+import type {
+  ActivityData,
+  AuthMode,
+  NavId,
+  SignInPayload,
+  SignUpPayload,
+  UserInfo,
+} from "./types";
 import "./AppLayout.css";
 
 /* ------------------------------------------------------------------ */
 /* Config                                                              */
 /* ------------------------------------------------------------------ */
 
-type ActivityData = Record<string, number>;
-type NavId = "community" | "create" | "tutorial" | "groups" | "settings" | "home" | "profile";
 type Theme = "dark" | "light";
-type UserInfo = { name?: string; email?: string; avatarUrl?: string };
 type NavItem = { id: "community" | "create" | "tutorial" | "groups"; label: string; icon: LucideIcon };
-type HeatmapDay = { iso: string; count: number } | null;
 type AppLayoutProps = {
   children: React.ReactNode;
   appName?: string;
@@ -36,6 +41,9 @@ type AppLayoutProps = {
   onSearch?: (query: string) => void;
   user?: UserInfo;
   onLogout?: () => void;
+  /** Throw an Error to show its message inside the modal. */
+  onSignIn?: (data: SignInPayload) => void | Promise<void>;
+  onSignUp?: (data: SignUpPayload) => void | Promise<void>;
   activity?: ActivityData;
 };
 type TopBarProps = {
@@ -46,6 +54,7 @@ type TopBarProps = {
   onNavigate?: (id: NavId) => void;
   user?: UserInfo;
   onLogout?: () => void;
+  onOpenAuth: (mode: AuthMode) => void;
 };
 type SideBarProps = {
   active: NavId;
@@ -62,148 +71,13 @@ const NAV_ITEMS: NavItem[] = [
   { id: "groups", label: "Groups", icon: Users },
 ];
 
-const HEATMAP_WEEKS = 16;
 const THEME_KEY = "flashcards-theme";
-
-/* ------------------------------------------------------------------ */
-/* Helpers                                                             */
-/* ------------------------------------------------------------------ */
-
-const toISO = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-// 0 = no activity, 4 = heaviest
-const levelFor = (count: number): number => {
-  if (count <= 0) return 0;
-  if (count < 5) return 1;
-  if (count < 15) return 2;
-  if (count < 30) return 3;
-  return 4;
-};
-
-// Deterministic placeholder data so the demo heat map doesn't flicker.
-// Replace by passing real data from FastAPI via the `activity` prop.
-const buildDemoActivity = (): ActivityData => {
-  const data: ActivityData = {};
-  const today = new Date();
-  let seed = 7;
-  const rand = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-  for (let i = 0; i < HEATMAP_WEEKS * 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    if (rand() > 0.45) data[toISO(d)] = Math.floor(rand() * 40);
-  }
-  return data;
-};
-
-/**
- * Builds columns of weeks (Sun -> Sat) ending with the current week.
- * Future days in the current week are returned as `null` so they render blank.
- */
-const buildWeeks = (activity: ActivityData): HeatmapDay[][] => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const start = new Date(today);
-  start.setDate(today.getDate() - today.getDay() - (HEATMAP_WEEKS - 1) * 7);
-
-  const weeks = [];
-  for (let w = 0; w < HEATMAP_WEEKS; w++) {
-    const days: HeatmapDay[] = [];
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + w * 7 + d);
-      if (date > today) {
-        days.push(null);
-      } else {
-        const iso = toISO(date);
-        days.push({ iso, count: activity[iso] || 0 });
-      }
-    }
-    weeks.push(days);
-  }
-  return weeks;
-};
-
-const computeStreak = (activity: ActivityData): number => {
-  const day = new Date();
-  // Don't break the streak just because today hasn't been studied yet.
-  if (!activity[toISO(day)]) day.setDate(day.getDate() - 1);
-  let streak = 0;
-  while (activity[toISO(day)] > 0) {
-    streak++;
-    day.setDate(day.getDate() - 1);
-  }
-  return streak;
-};
-
-/* ------------------------------------------------------------------ */
-/* Heat map                                                            */
-/* ------------------------------------------------------------------ */
-
-function StudyHeatmap({ activity }: { activity: ActivityData }) {
-  const weeks = useMemo(() => buildWeeks(activity), [activity]);
-  const total = useMemo(
-    () => weeks.flat().reduce((sum, d) => sum + (d ? d.count : 0), 0),
-    [weeks]
-  );
-  const streak = useMemo(() => computeStreak(activity), [activity]);
-
-  return (
-    <section className="fc-heatmap" aria-label="Study activity">
-      <div className="fc-heatmap-head">
-        <span className="fc-heatmap-title">Study activity</span>
-        <span className="fc-heatmap-streak" title="Current streak">
-          <Flame size={14} aria-hidden="true" />
-          {streak}d
-        </span>
-      </div>
-
-      <div className="fc-heatmap-grid" role="img"
-        aria-label={`${total} cards studied in the last ${HEATMAP_WEEKS} weeks`}>
-        {weeks.map((week, wi) => (
-          <div className="fc-heatmap-col" key={wi}>
-            {week.map((day, di) =>
-              day ? (
-                <span
-                  key={di}
-                  className={`fc-cell lvl-${levelFor(day.count)}`}
-                  title={`${day.count} card${day.count === 1 ? "" : "s"} on ${day.iso}`}
-                />
-              ) : (
-                <span key={di} className="fc-cell empty" />
-              )
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="fc-heatmap-foot">
-        <span>{total} cards in {HEATMAP_WEEKS} weeks</span>
-        <span className="fc-legend" aria-hidden="true">
-          Less
-          {[0, 1, 2, 3, 4].map((l) => (
-            <span key={l} className={`fc-cell lvl-${l}`} />
-          ))}
-          More
-        </span>
-      </div>
-    </section>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Top bar                                                             */
 /* ------------------------------------------------------------------ */
 
-function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onLogout }: TopBarProps) {
+function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onLogout, onOpenAuth }: TopBarProps) {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -276,6 +150,7 @@ function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onL
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
+        {user ? (
         <div className="fc-user" ref={menuRef}>
           <button
             className="fc-avatar"
@@ -306,6 +181,16 @@ function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onL
             </div>
           )}
         </div>
+        ) : (
+          <div className="fc-auth-actions">
+            <button className="fc-btn-ghost" onClick={() => onOpenAuth("signin")}>
+              Sign in
+            </button>
+            <button className="fc-btn-primary" onClick={() => onOpenAuth("signup")}>
+              Sign up
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );
@@ -374,6 +259,8 @@ export default function AppLayout({
   onSearch,
   user,
   onLogout,
+  onSignIn,
+  onSignUp,
   activity,
 }: AppLayoutProps) {
   // Dark by default; remember the user's choice.
@@ -385,6 +272,7 @@ export default function AppLayout({
     }
   });
   const [collapsed, setCollapsed] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
 
   useEffect(() => {
     try {
@@ -407,6 +295,7 @@ export default function AppLayout({
         onNavigate={onNavigate}
         user={user}
         onLogout={onLogout}
+        onOpenAuth={setAuthMode}
       />
       <div className="fc-body">
         <SideBar
@@ -418,6 +307,16 @@ export default function AppLayout({
         />
         <main className="fc-main">{children}</main>
       </div>
+
+      {authMode && !user && (
+        <AuthModal
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onClose={() => setAuthMode(null)}
+          onSignIn={onSignIn}
+          onSignUp={onSignUp}
+        />
+      )}
     </div>
   );
 }

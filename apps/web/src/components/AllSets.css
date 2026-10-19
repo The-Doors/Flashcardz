@@ -1,0 +1,104 @@
+/* Uses the theme variables defined on .fc-app in AppLayout.css */
+
+.as-section { display: flex; flex-direction: column; gap: 12px; }
+
+.as-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.as-count {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--panel-hover);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.as-list {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  --col-date: 150px;
+  --col-cards: 100px;
+  --col-actions: 88px;
+}
+.as-list ul { list-style: none; margin: 0; padding: 0; }
+
+.as-list-head,
+.as-row-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--col-date) var(--col-cards);
+  align-items: center;
+  column-gap: 16px;
+}
+
+.as-list-head {
+  padding: 10px calc(var(--col-actions) + 16px) 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.as-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.as-row:last-child { border-bottom: 0; }
+.as-row:hover { background: var(--panel-hover); }
+
+.as-row-main {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 8px 14px 16px;
+  text-align: left;
+}
+.as-row-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.as-row-main:hover .as-row-name { color: var(--accent); }
+.as-row-date,
+.as-row-cards { color: var(--text-muted); white-space: nowrap; }
+
+.as-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  width: var(--col-actions);
+  padding-right: 12px;
+}
+
+.as-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+.as-icon:hover { background: var(--border); color: var(--text); }
+.as-icon-danger:hover { color: #ef4743; }
+
+@media (max-width: 640px) {
+  .as-list-head { display: none; }
+
+  .as-row-main {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 4px;
+    padding: 12px 4px 12px 14px;
+  }
+  .as-row-name { grid-column: 1 / -1; }
+  .as-row-date,
+  .as-row-cards { font-size: 12px; }
+  .as-row-actions { width: auto; padding-right: 8px; }
+}

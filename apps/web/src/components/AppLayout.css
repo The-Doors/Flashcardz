@@ -57,7 +57,9 @@ body {
   box-sizing: border-box;
 }
 
-.fc-app button {
+/* :where() keeps this reset at zero specificity so component classes
+   (.cd-danger, .fc-avatar, ...) can set their own background/color. */
+:where(.fc-app button) {
   font: inherit;
   color: inherit;
   background: none;
@@ -148,6 +150,20 @@ body {
   color: var(--text-muted);
 }
 .fc-icon-btn:hover { background: var(--panel-hover); color: var(--text); }
+
+/* Signed-out actions */
+.fc-auth-actions { display: flex; align-items: center; gap: 8px; }
+.fc-btn-ghost,
+.fc-btn-primary {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.fc-btn-ghost { color: var(--text); }
+.fc-btn-ghost:hover { background: var(--panel-hover); }
+.fc-btn-primary { background: var(--accent); color: var(--accent-text); }
+.fc-btn-primary:hover { filter: brightness(1.08); }
 
 /* Avatar + dropdown */
 .fc-user { position: relative; }
@@ -245,55 +261,6 @@ body {
   flex-direction: column;
   gap: 2px;
 }
-
-/* ---------- Heat map ---------- */
-.fc-heatmap {
-  padding: 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.fc-heatmap-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-.fc-heatmap-streak {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--accent);
-  font-size: 12px;
-}
-.fc-heatmap-grid { display: flex; gap: 3px; }
-.fc-heatmap-col { display: flex; flex-direction: column; gap: 3px; }
-
-.fc-cell {
-  display: block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--cell-0);
-}
-.fc-cell.lvl-1 { background: var(--cell-1); }
-.fc-cell.lvl-2 { background: var(--cell-2); }
-.fc-cell.lvl-3 { background: var(--cell-3); }
-.fc-cell.lvl-4 { background: var(--cell-4); }
-.fc-cell.empty { background: transparent; }
-
-.fc-heatmap-foot {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-  color: var(--text-muted);
-  font-size: 11px;
-}
-.fc-legend { display: inline-flex; align-items: center; gap: 3px; }
-.fc-legend .fc-cell:first-of-type { margin-left: 4px; }
-.fc-legend .fc-cell:last-of-type { margin-right: 4px; }
 
 /* ---------- Main ---------- */
 .fc-main {

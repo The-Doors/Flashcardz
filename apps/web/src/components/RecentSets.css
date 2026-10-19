@@ -1,0 +1,66 @@
+/* Uses the theme variables defined on .fc-app in AppLayout.css */
+
+.rs-section { display: flex; flex-direction: column; gap: 12px; }
+
+.rs-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.rs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.rs-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 110px;
+  margin-bottom: 7px;
+  padding: 16px 40px 14px 16px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  /* two thin layers underneath so each set reads as a small stack of cards */
+  box-shadow: 0 4px 0 -1px var(--panel), 0 5px 0 -1px var(--border),
+    0 8px 0 -3px var(--panel), 0 9px 0 -3px var(--border);
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+.rs-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.rs-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rs-meta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.rs-when { display: inline-flex; align-items: center; gap: 4px; }
+.rs-chevron {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  color: var(--text-muted);
+}
+.rs-card:hover .rs-chevron { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-card { transition: none; }
+  .rs-card:hover { transform: none; }
+}

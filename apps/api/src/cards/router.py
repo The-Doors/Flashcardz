@@ -28,6 +28,15 @@ async def create_card(
     return CardRead.model_validate(card)
 
 
+@router.get("", response_model=list[CardRead])
+async def list_cards(
+    user_id: Annotated[UUID, Depends(get_authenticated_user_id)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> list[CardRead]:
+    cards = await card_service.list_cards(session, user_id)
+    return [CardRead.model_validate(card) for card in cards]
+
+
 @router.get("/{card_id}/{version}", response_model=CardRead)
 async def read_card(
     card_id: int,

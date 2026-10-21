@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +41,30 @@ async def read_card(
             Card.version == version,
             or_(Card.creator_id == user_id, Card.public.is_(True)),
         )
+    )
+
+
+async def list_cards(session: AsyncSession, user_id: UUID) -> list[Card]:
+    latest_versions = (
+        select(Card.id, func.max(Card.version).label("version"))
+        .where(Card.creator_id == user_id)
+        .group_by(Card.id)
+        .subquery()
+    )
+    return list(
+        (
+            await session.scalars(
+                select(Card)
+                .join(
+                    latest_versions,
+                    and_(
+                        Card.id == latest_versions.c.id,
+                        Card.version == latest_versions.c.version,
+                    ),
+                )
+                .order_by(Card.id)
+            )
+        ).all()
     )
 
 

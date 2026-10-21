@@ -7,6 +7,8 @@ from sqlalchemy import engine_from_config, pool
 
 from src.cards import models as card_models
 from src.config import get_settings
+from src.decks import models as deck_models
+from src.instances import models as instance_models
 from src.models import Base
 from src.users import models as user_models
 

@@ -5,419 +5,916 @@
  * OpenAPI spec version: 0.1.0
  */
 export interface CardCreate {
-	/** @minLength 1 */
-	front: string;
-	/** @minLength 1 */
-	back: string;
-	public?: boolean;
+  /** @minLength 1 */
+  front: string;
+  /** @minLength 1 */
+  back: string;
+  public?: boolean;
 }
 
 export interface CardRead {
-	id: number;
-	front: string;
-	back: string;
-	version: number;
-	public: boolean;
+  id: number;
+  front: string;
+  back: string;
+  version: number;
+  public: boolean;
 }
 
 export interface CardUpdate {
-	front?: string | null;
-	back?: string | null;
+  front?: string | null;
+  back?: string | null;
+}
+
+export interface DeckCreate {
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface DeckRead {
+  id: number;
+  name: string;
+}
+
+export interface DeckUpdate {
+  name?: string | null;
 }
 
 export type ValidationErrorCtx = { [key: string]: unknown };
 
 export interface ValidationError {
-	loc: (string | number)[];
-	msg: string;
-	type: string;
-	input?: unknown;
-	ctx?: ValidationErrorCtx;
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+  input?: unknown;
+  ctx?: ValidationErrorCtx;
 }
 
 export interface HTTPValidationError {
-	detail?: ValidationError[];
+  detail?: ValidationError[];
+}
+
+export interface InstanceCreate {
+  /** @exclusiveMinimum 0 */
+  card_id: number;
+  /** @exclusiveMinimum 0 */
+  card_version: number;
+}
+
+export interface InstanceRead {
+  deck_id: number;
+  card_id: number;
+  card_version: number;
+}
+
+export interface InstanceUpdate {
+  card_id?: number | null;
+  card_version?: number | null;
 }
 
 export interface UserCreate {
-	/**
-	 * @minLength 1
-	 * @maxLength 50
-	 * @pattern ^\w+$
-	 */
-	username: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     * @pattern ^\w+$
+     */
+  username: string;
 }
 
 export interface UserRead {
-	id: string;
-	username: string;
+  id: string;
+  username: string;
 }
 
 export type readCurrentUserUsersMeGetResponse200 = {
-	data: UserRead;
-	status: 200;
+  data: UserRead
+  status: 200
+}
+
+export type readCurrentUserUsersMeGetResponseSuccess = (readCurrentUserUsersMeGetResponse200) & {
+  headers: Headers;
 };
+;
 
-export type readCurrentUserUsersMeGetResponseSuccess =
-	readCurrentUserUsersMeGetResponse200 & {
-		headers: Headers;
-	};
-
-export type readCurrentUserUsersMeGetResponse =
-	readCurrentUserUsersMeGetResponseSuccess;
+export type readCurrentUserUsersMeGetResponse = (readCurrentUserUsersMeGetResponseSuccess)
 
 export const getReadCurrentUserUsersMeGetUrl = () => {
-	return `/api/users/me`;
-};
+
+
+
+
+  return `/api/users/me`
+}
 
 /**
  * @summary Read Current User
  */
-export const readCurrentUserUsersMeGet = async (
-	options?: RequestInit,
-): Promise<readCurrentUserUsersMeGetResponse> => {
-	const res = await fetch(getReadCurrentUserUsersMeGetUrl(), {
-		...options,
-		method: "GET",
-	});
+export const readCurrentUserUsersMeGet = async ( options?: RequestInit): Promise<readCurrentUserUsersMeGetResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  const res = await fetch(getReadCurrentUserUsersMeGetUrl(),
+  {
+    ...options,
+    method: 'GET'
 
-	const data: readCurrentUserUsersMeGetResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as readCurrentUserUsersMeGetResponse;
-};
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: readCurrentUserUsersMeGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as readCurrentUserUsersMeGetResponse
+}
+
+
 
 export type createUserUsersPostResponse201 = {
-	data: UserRead;
-	status: 201;
-};
+  data: UserRead
+  status: 201
+}
 
 export type createUserUsersPostResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createUserUsersPostResponseSuccess = (createUserUsersPostResponse201) & {
+  headers: Headers;
+};
+export type createUserUsersPostResponseError = (createUserUsersPostResponse422) & {
+  headers: Headers;
 };
 
-export type createUserUsersPostResponseSuccess =
-	createUserUsersPostResponse201 & {
-		headers: Headers;
-	};
-export type createUserUsersPostResponseError =
-	createUserUsersPostResponse422 & {
-		headers: Headers;
-	};
-
-export type createUserUsersPostResponse =
-	| createUserUsersPostResponseSuccess
-	| createUserUsersPostResponseError;
+export type createUserUsersPostResponse = (createUserUsersPostResponseSuccess | createUserUsersPostResponseError)
 
 export const getCreateUserUsersPostUrl = () => {
-	return `/api/users`;
-};
+
+
+
+
+  return `/api/users`
+}
 
 /**
  * @summary Create User
  */
-export const createUserUsersPost = async (
-	userCreate: UserCreate,
-	options?: RequestInit,
-): Promise<createUserUsersPostResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Symbol.iterator in h) {
-			return Object.fromEntries(
-				Array.from(
-					h as Iterable<Iterable<string>>,
-					(entry) => Array.from(entry) as [string, string],
-				),
-			);
-		}
-		const headers: Record<string, string | readonly string[]> = {};
-		for (const [name, value] of Object.entries<
-			string | readonly string[] | undefined
-		>(h)) {
-			if (value !== undefined) headers[name] = value;
-		}
-		return headers;
-	};
-	const res = await fetch(getCreateUserUsersPostUrl(), {
-		...options,
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
-		},
-		body: JSON.stringify(userCreate),
-	});
+export const createUserUsersPost = async (userCreate: UserCreate, options?: RequestInit): Promise<createUserUsersPostResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCreateUserUsersPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(userCreate)
+  }
+)
 
-	const data: createUserUsersPostResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as createUserUsersPostResponse;
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createUserUsersPostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createUserUsersPostResponse
+}
+
+
+
+export type listCardsCardsGetResponse200 = {
+  data: CardRead[]
+  status: 200
+}
+
+export type listCardsCardsGetResponseSuccess = (listCardsCardsGetResponse200) & {
+  headers: Headers;
 };
+;
+
+export type listCardsCardsGetResponse = (listCardsCardsGetResponseSuccess)
+
+export const getListCardsCardsGetUrl = () => {
+
+
+
+
+  return `/api/cards`
+}
+
+/**
+ * @summary List Cards
+ */
+export const listCardsCardsGet = async ( options?: RequestInit): Promise<listCardsCardsGetResponse> => {
+
+  const res = await fetch(getListCardsCardsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listCardsCardsGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listCardsCardsGetResponse
+}
+
+
 
 export type createCardCardsPostResponse201 = {
-	data: CardRead;
-	status: 201;
-};
+  data: CardRead
+  status: 201
+}
 
 export type createCardCardsPostResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createCardCardsPostResponseSuccess = (createCardCardsPostResponse201) & {
+  headers: Headers;
+};
+export type createCardCardsPostResponseError = (createCardCardsPostResponse422) & {
+  headers: Headers;
 };
 
-export type createCardCardsPostResponseSuccess =
-	createCardCardsPostResponse201 & {
-		headers: Headers;
-	};
-export type createCardCardsPostResponseError =
-	createCardCardsPostResponse422 & {
-		headers: Headers;
-	};
-
-export type createCardCardsPostResponse =
-	| createCardCardsPostResponseSuccess
-	| createCardCardsPostResponseError;
+export type createCardCardsPostResponse = (createCardCardsPostResponseSuccess | createCardCardsPostResponseError)
 
 export const getCreateCardCardsPostUrl = () => {
-	return `/api/cards`;
-};
+
+
+
+
+  return `/api/cards`
+}
 
 /**
  * @summary Create Card
  */
-export const createCardCardsPost = async (
-	cardCreate: CardCreate,
-	options?: RequestInit,
-): Promise<createCardCardsPostResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Symbol.iterator in h) {
-			return Object.fromEntries(
-				Array.from(
-					h as Iterable<Iterable<string>>,
-					(entry) => Array.from(entry) as [string, string],
-				),
-			);
-		}
-		const headers: Record<string, string | readonly string[]> = {};
-		for (const [name, value] of Object.entries<
-			string | readonly string[] | undefined
-		>(h)) {
-			if (value !== undefined) headers[name] = value;
-		}
-		return headers;
-	};
-	const res = await fetch(getCreateCardCardsPostUrl(), {
-		...options,
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			...getHeaders(options?.headers),
-		},
-		body: JSON.stringify(cardCreate),
-	});
+export const createCardCardsPost = async (cardCreate: CardCreate, options?: RequestInit): Promise<createCardCardsPostResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCreateCardCardsPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cardCreate)
+  }
+)
 
-	const data: createCardCardsPostResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as createCardCardsPostResponse;
-};
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createCardCardsPostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createCardCardsPostResponse
+}
+
+
 
 export type readCardCardsCardIdVersionGetResponse200 = {
-	data: CardRead;
-	status: 200;
-};
+  data: CardRead
+  status: 200
+}
 
 export type readCardCardsCardIdVersionGetResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type readCardCardsCardIdVersionGetResponseSuccess = (readCardCardsCardIdVersionGetResponse200) & {
+  headers: Headers;
+};
+export type readCardCardsCardIdVersionGetResponseError = (readCardCardsCardIdVersionGetResponse422) & {
+  headers: Headers;
 };
 
-export type readCardCardsCardIdVersionGetResponseSuccess =
-	readCardCardsCardIdVersionGetResponse200 & {
-		headers: Headers;
-	};
-export type readCardCardsCardIdVersionGetResponseError =
-	readCardCardsCardIdVersionGetResponse422 & {
-		headers: Headers;
-	};
+export type readCardCardsCardIdVersionGetResponse = (readCardCardsCardIdVersionGetResponseSuccess | readCardCardsCardIdVersionGetResponseError)
 
-export type readCardCardsCardIdVersionGetResponse =
-	| readCardCardsCardIdVersionGetResponseSuccess
-	| readCardCardsCardIdVersionGetResponseError;
+export const getReadCardCardsCardIdVersionGetUrl = (cardId: number,
+    version: number,) => {
 
-export const getReadCardCardsCardIdVersionGetUrl = (
-	cardId: number,
-	version: number,
-) => {
-	return `/api/cards/${cardId}/${version}`;
-};
+
+
+
+  return `/api/cards/${cardId}/${version}`
+}
 
 /**
  * @summary Read Card
  */
-export const readCardCardsCardIdVersionGet = async (
-	cardId: number,
-	version: number,
-	options?: RequestInit,
-): Promise<readCardCardsCardIdVersionGetResponse> => {
-	const res = await fetch(
-		getReadCardCardsCardIdVersionGetUrl(cardId, version),
-		{
-			...options,
-			method: "GET",
-		},
-	);
+export const readCardCardsCardIdVersionGet = async (cardId: number,
+    version: number, options?: RequestInit): Promise<readCardCardsCardIdVersionGetResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  const res = await fetch(getReadCardCardsCardIdVersionGetUrl(cardId,version),
+  {
+    ...options,
+    method: 'GET'
 
-	const data: readCardCardsCardIdVersionGetResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as readCardCardsCardIdVersionGetResponse;
-};
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: readCardCardsCardIdVersionGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as readCardCardsCardIdVersionGetResponse
+}
+
+
 
 export type updateCardCardsCardIdVersionPatchResponse200 = {
-	data: CardRead;
-	status: 200;
-};
+  data: CardRead
+  status: 200
+}
 
 export type updateCardCardsCardIdVersionPatchResponse422 = {
-	data: HTTPValidationError;
-	status: 422;
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateCardCardsCardIdVersionPatchResponseSuccess = (updateCardCardsCardIdVersionPatchResponse200) & {
+  headers: Headers;
+};
+export type updateCardCardsCardIdVersionPatchResponseError = (updateCardCardsCardIdVersionPatchResponse422) & {
+  headers: Headers;
 };
 
-export type updateCardCardsCardIdVersionPatchResponseSuccess =
-	updateCardCardsCardIdVersionPatchResponse200 & {
-		headers: Headers;
-	};
-export type updateCardCardsCardIdVersionPatchResponseError =
-	updateCardCardsCardIdVersionPatchResponse422 & {
-		headers: Headers;
-	};
+export type updateCardCardsCardIdVersionPatchResponse = (updateCardCardsCardIdVersionPatchResponseSuccess | updateCardCardsCardIdVersionPatchResponseError)
 
-export type updateCardCardsCardIdVersionPatchResponse =
-	| updateCardCardsCardIdVersionPatchResponseSuccess
-	| updateCardCardsCardIdVersionPatchResponseError;
+export const getUpdateCardCardsCardIdVersionPatchUrl = (cardId: number,
+    version: number,) => {
 
-export const getUpdateCardCardsCardIdVersionPatchUrl = (
-	cardId: number,
-	version: number,
-) => {
-	return `/api/cards/${cardId}/${version}`;
-};
+
+
+
+  return `/api/cards/${cardId}/${version}`
+}
 
 /**
  * @summary Update Card
  */
-export const updateCardCardsCardIdVersionPatch = async (
-	cardId: number,
-	version: number,
-	cardUpdate: CardUpdate,
-	options?: RequestInit,
-): Promise<updateCardCardsCardIdVersionPatchResponse> => {
-	const getHeaders = (
-		h?: NonNullable<RequestInit["headers"]>,
-	): Record<string, string | readonly string[]> => {
-		if (!h) return {};
-		if (h instanceof Headers) return Object.fromEntries(h.entries());
-		if (Symbol.iterator in h) {
-			return Object.fromEntries(
-				Array.from(
-					h as Iterable<Iterable<string>>,
-					(entry) => Array.from(entry) as [string, string],
-				),
-			);
-		}
-		const headers: Record<string, string | readonly string[]> = {};
-		for (const [name, value] of Object.entries<
-			string | readonly string[] | undefined
-		>(h)) {
-			if (value !== undefined) headers[name] = value;
-		}
-		return headers;
-	};
-	const res = await fetch(
-		getUpdateCardCardsCardIdVersionPatchUrl(cardId, version),
-		{
-			...options,
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				...getHeaders(options?.headers),
-			},
-			body: JSON.stringify(cardUpdate),
-		},
-	);
+export const updateCardCardsCardIdVersionPatch = async (cardId: number,
+    version: number,
+    cardUpdate: CardUpdate, options?: RequestInit): Promise<updateCardCardsCardIdVersionPatchResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getUpdateCardCardsCardIdVersionPatchUrl(cardId,version),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cardUpdate)
+  }
+)
 
-	const data: updateCardCardsCardIdVersionPatchResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as updateCardCardsCardIdVersionPatchResponse;
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updateCardCardsCardIdVersionPatchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updateCardCardsCardIdVersionPatchResponse
+}
+
+
+
+export type listDecksDecksGetResponse200 = {
+  data: DeckRead[]
+  status: 200
+}
+
+export type listDecksDecksGetResponseSuccess = (listDecksDecksGetResponse200) & {
+  headers: Headers;
 };
+;
+
+export type listDecksDecksGetResponse = (listDecksDecksGetResponseSuccess)
+
+export const getListDecksDecksGetUrl = () => {
+
+
+
+
+  return `/api/decks`
+}
+
+/**
+ * @summary List Decks
+ */
+export const listDecksDecksGet = async ( options?: RequestInit): Promise<listDecksDecksGetResponse> => {
+
+  const res = await fetch(getListDecksDecksGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listDecksDecksGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listDecksDecksGetResponse
+}
+
+
+
+export type createDeckDecksPostResponse201 = {
+  data: DeckRead
+  status: 201
+}
+
+export type createDeckDecksPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createDeckDecksPostResponseSuccess = (createDeckDecksPostResponse201) & {
+  headers: Headers;
+};
+export type createDeckDecksPostResponseError = (createDeckDecksPostResponse422) & {
+  headers: Headers;
+};
+
+export type createDeckDecksPostResponse = (createDeckDecksPostResponseSuccess | createDeckDecksPostResponseError)
+
+export const getCreateDeckDecksPostUrl = () => {
+
+
+
+
+  return `/api/decks`
+}
+
+/**
+ * @summary Create Deck
+ */
+export const createDeckDecksPost = async (deckCreate: DeckCreate, options?: RequestInit): Promise<createDeckDecksPostResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCreateDeckDecksPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(deckCreate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createDeckDecksPostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createDeckDecksPostResponse
+}
+
+
+
+export type readDeckDecksDeckIdGetResponse200 = {
+  data: DeckRead
+  status: 200
+}
+
+export type readDeckDecksDeckIdGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type readDeckDecksDeckIdGetResponseSuccess = (readDeckDecksDeckIdGetResponse200) & {
+  headers: Headers;
+};
+export type readDeckDecksDeckIdGetResponseError = (readDeckDecksDeckIdGetResponse422) & {
+  headers: Headers;
+};
+
+export type readDeckDecksDeckIdGetResponse = (readDeckDecksDeckIdGetResponseSuccess | readDeckDecksDeckIdGetResponseError)
+
+export const getReadDeckDecksDeckIdGetUrl = (deckId: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}`
+}
+
+/**
+ * @summary Read Deck
+ */
+export const readDeckDecksDeckIdGet = async (deckId: number, options?: RequestInit): Promise<readDeckDecksDeckIdGetResponse> => {
+
+  const res = await fetch(getReadDeckDecksDeckIdGetUrl(deckId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: readDeckDecksDeckIdGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as readDeckDecksDeckIdGetResponse
+}
+
+
+
+export type updateDeckDecksDeckIdPatchResponse200 = {
+  data: DeckRead
+  status: 200
+}
+
+export type updateDeckDecksDeckIdPatchResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateDeckDecksDeckIdPatchResponseSuccess = (updateDeckDecksDeckIdPatchResponse200) & {
+  headers: Headers;
+};
+export type updateDeckDecksDeckIdPatchResponseError = (updateDeckDecksDeckIdPatchResponse422) & {
+  headers: Headers;
+};
+
+export type updateDeckDecksDeckIdPatchResponse = (updateDeckDecksDeckIdPatchResponseSuccess | updateDeckDecksDeckIdPatchResponseError)
+
+export const getUpdateDeckDecksDeckIdPatchUrl = (deckId: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}`
+}
+
+/**
+ * @summary Update Deck
+ */
+export const updateDeckDecksDeckIdPatch = async (deckId: number,
+    deckUpdate: DeckUpdate, options?: RequestInit): Promise<updateDeckDecksDeckIdPatchResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getUpdateDeckDecksDeckIdPatchUrl(deckId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(deckUpdate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updateDeckDecksDeckIdPatchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updateDeckDecksDeckIdPatchResponse
+}
+
+
+
+export type createInstanceDecksDeckIdInstancesPostResponse201 = {
+  data: InstanceRead
+  status: 201
+}
+
+export type createInstanceDecksDeckIdInstancesPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createInstanceDecksDeckIdInstancesPostResponseSuccess = (createInstanceDecksDeckIdInstancesPostResponse201) & {
+  headers: Headers;
+};
+export type createInstanceDecksDeckIdInstancesPostResponseError = (createInstanceDecksDeckIdInstancesPostResponse422) & {
+  headers: Headers;
+};
+
+export type createInstanceDecksDeckIdInstancesPostResponse = (createInstanceDecksDeckIdInstancesPostResponseSuccess | createInstanceDecksDeckIdInstancesPostResponseError)
+
+export const getCreateInstanceDecksDeckIdInstancesPostUrl = (deckId: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}/instances`
+}
+
+/**
+ * @summary Create Instance
+ */
+export const createInstanceDecksDeckIdInstancesPost = async (deckId: number,
+    instanceCreate: InstanceCreate, options?: RequestInit): Promise<createInstanceDecksDeckIdInstancesPostResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCreateInstanceDecksDeckIdInstancesPostUrl(deckId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(instanceCreate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createInstanceDecksDeckIdInstancesPostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createInstanceDecksDeckIdInstancesPostResponse
+}
+
+
+
+export type listInstancesDecksDeckIdInstancesGetResponse200 = {
+  data: InstanceRead[]
+  status: 200
+}
+
+export type listInstancesDecksDeckIdInstancesGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type listInstancesDecksDeckIdInstancesGetResponseSuccess = (listInstancesDecksDeckIdInstancesGetResponse200) & {
+  headers: Headers;
+};
+export type listInstancesDecksDeckIdInstancesGetResponseError = (listInstancesDecksDeckIdInstancesGetResponse422) & {
+  headers: Headers;
+};
+
+export type listInstancesDecksDeckIdInstancesGetResponse = (listInstancesDecksDeckIdInstancesGetResponseSuccess | listInstancesDecksDeckIdInstancesGetResponseError)
+
+export const getListInstancesDecksDeckIdInstancesGetUrl = (deckId: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}/instances`
+}
+
+/**
+ * @summary List Instances
+ */
+export const listInstancesDecksDeckIdInstancesGet = async (deckId: number, options?: RequestInit): Promise<listInstancesDecksDeckIdInstancesGetResponse> => {
+
+  const res = await fetch(getListInstancesDecksDeckIdInstancesGetUrl(deckId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listInstancesDecksDeckIdInstancesGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listInstancesDecksDeckIdInstancesGetResponse
+}
+
+
+
+export type readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse200 = {
+  data: InstanceRead
+  status: 200
+}
+
+export type readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponseSuccess = (readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse200) & {
+  headers: Headers;
+};
+export type readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponseError = (readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse422) & {
+  headers: Headers;
+};
+
+export type readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse = (readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponseSuccess | readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponseError)
+
+export const getReadInstanceDecksDeckIdInstancesCardIdCardVersionGetUrl = (deckId: number,
+    cardId: number,
+    cardVersion: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}/instances/${cardId}/${cardVersion}`
+}
+
+/**
+ * @summary Read Instance
+ */
+export const readInstanceDecksDeckIdInstancesCardIdCardVersionGet = async (deckId: number,
+    cardId: number,
+    cardVersion: number, options?: RequestInit): Promise<readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse> => {
+
+  const res = await fetch(getReadInstanceDecksDeckIdInstancesCardIdCardVersionGetUrl(deckId,cardId,cardVersion),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as readInstanceDecksDeckIdInstancesCardIdCardVersionGetResponse
+}
+
+
+
+export type updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse200 = {
+  data: InstanceRead
+  status: 200
+}
+
+export type updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponseSuccess = (updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse200) & {
+  headers: Headers;
+};
+export type updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponseError = (updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse422) & {
+  headers: Headers;
+};
+
+export type updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse = (updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponseSuccess | updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponseError)
+
+export const getUpdateInstanceDecksDeckIdInstancesCardIdCardVersionPatchUrl = (deckId: number,
+    cardId: number,
+    cardVersion: number,) => {
+
+
+
+
+  return `/api/decks/${deckId}/instances/${cardId}/${cardVersion}`
+}
+
+/**
+ * @summary Update Instance
+ */
+export const updateInstanceDecksDeckIdInstancesCardIdCardVersionPatch = async (deckId: number,
+    cardId: number,
+    cardVersion: number,
+    instanceUpdate: InstanceUpdate, options?: RequestInit): Promise<updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getUpdateInstanceDecksDeckIdInstancesCardIdCardVersionPatchUrl(deckId,cardId,cardVersion),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(instanceUpdate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updateInstanceDecksDeckIdInstancesCardIdCardVersionPatchResponse
+}
+
+
 
 export type rootGetResponse200 = {
-	data: unknown;
-	status: 200;
-};
+  data: unknown
+  status: 200
+}
 
-export type rootGetResponseSuccess = rootGetResponse200 & {
-	headers: Headers;
+export type rootGetResponseSuccess = (rootGetResponse200) & {
+  headers: Headers;
 };
+;
 
-export type rootGetResponse = rootGetResponseSuccess;
+export type rootGetResponse = (rootGetResponseSuccess)
 
 export const getRootGetUrl = () => {
-	return `/api/`;
-};
+
+
+
+
+  return `/api/`
+}
 
 /**
  * @summary Root
  */
-export const rootGet = async (
-	options?: RequestInit,
-): Promise<rootGetResponse> => {
-	const res = await fetch(getRootGetUrl(), {
-		...options,
-		method: "GET",
-	});
+export const rootGet = async ( options?: RequestInit): Promise<rootGetResponse> => {
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  const res = await fetch(getRootGetUrl(),
+  {
+    ...options,
+    method: 'GET'
 
-	const data: rootGetResponse["data"] = body ? JSON.parse(body) : {};
-	return { data, status: res.status, headers: res.headers } as rootGetResponse;
-};
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: rootGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as rootGetResponse
+}

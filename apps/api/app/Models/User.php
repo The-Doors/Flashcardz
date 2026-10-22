@@ -18,6 +18,8 @@ class User extends Authenticatable
 
     protected $keyType = 'string';
 
+    protected $hidden = ['username_lowercase'];
+
     public $incrementing = false;
 
     /** @return Attribute<string, string> */

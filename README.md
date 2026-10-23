@@ -6,13 +6,13 @@
 
 Prerequisites:
 
-- Docker (Windows: use WSL2)
+- Docker 
 - [node](https://nodejs.org/en/download)
 - [supabase cli](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
 ### Api
 
-First setup, from the repository root (keep your existing `.env` and `APP_KEY` if already configured):
+First setup: 
 
 ```
 supabase start

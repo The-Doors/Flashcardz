@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Search,
@@ -15,7 +15,7 @@ import {
   User,
   LogOut,
 } from "lucide-react";
-import StudyHeatmap, { buildDemoActivity } from "./StudyHeatmap";
+import StudyHeatmap from "./StudyHeatmap";
 import AuthModal from "./AuthModal";
 import type {
   ActivityData,
@@ -61,7 +61,7 @@ type SideBarProps = {
   onNavigate?: (id: NavId) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
-  activity: ActivityData;
+  activity?: ActivityData;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -218,7 +218,7 @@ function SideBar({ active, onNavigate, collapsed, onToggleCollapsed, activity }:
     <aside className={`fc-sidebar ${collapsed ? "collapsed" : ""}`} aria-label="Primary">
       <nav className="fc-nav">{NAV_ITEMS.map(renderItem)}</nav>
 
-      <StudyHeatmap activity={activity} />
+      {<StudyHeatmap activity={activity} />}
 
       <div className="fc-sidebar-bottom">
         {renderItem({ id: "settings", label: "Settings", icon: Settings })}
@@ -240,17 +240,6 @@ function SideBar({ active, onNavigate, collapsed, onToggleCollapsed, activity }:
 /* Layout (default export)                                             */
 /* ------------------------------------------------------------------ */
 
-/**
- * Props
- *  - children:   page content, rendered in the main area
- *  - appName:    brand text in the top bar
- *  - active:     id of the current page ("community" | "create" | "tutorial" | "groups" | "settings")
- *  - onNavigate: (id) => void   (swap for react-router's useNavigate)
- *  - onSearch:   (query) => void
- *  - user:       { name, email, avatarUrl }
- *  - onLogout:   () => void
- *  - activity:   { "YYYY-MM-DD": cardsStudied }  - heat map data from your API
- */
 export default function AppLayout({
   children,
   appName = "FlashCardz",
@@ -263,7 +252,6 @@ export default function AppLayout({
   onSignUp,
   activity,
 }: AppLayoutProps) {
-  // Dark by default; remember the user's choice.
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return (localStorage.getItem(THEME_KEY) as Theme | null) || "dark";
@@ -281,9 +269,6 @@ export default function AppLayout({
       /* storage unavailable - ignore */
     }
   }, [theme]);
-
-  const demoActivity = useMemo(buildDemoActivity, []);
-  const data = activity ?? demoActivity;
 
   return (
     <div className="fc-app" data-theme={theme}>
@@ -303,7 +288,7 @@ export default function AppLayout({
           onNavigate={onNavigate}
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
-          activity={data}
+          activity={activity}
         />
         <main className="fc-main">{children}</main>
       </div>

@@ -3,7 +3,6 @@ import AppLayout from "./AppLayout";
 import RecentSets from "./RecentSets";
 import AllSets from "./AllSets";
 import ConfirmDelete from "./ConfirmDelete";
-import { DAY_MS } from "./formatters";
 import type {
   ActivityData,
   FlashcardSet,
@@ -29,39 +28,24 @@ type HomePageProps = {
   onNavigate?: (id: NavId) => void;
 };
 
-// Placeholder data used only while the `sets` prop is undefined (API not wired up).
-// Pass `sets={[]}` to show an empty page.
-const daysAgo = (n: number): string =>
-  new Date(Date.now() - n * DAY_MS).toISOString();
-
-const DEMO_SETS: FlashcardSet[] = [
-  { id: 1, name: "Spanish: Common Verbs", cardCount: 48, lastWorkedOn: daysAgo(0) },
-  { id: 2, name: "Organic Chemistry: Functional Groups", cardCount: 32, lastWorkedOn: daysAgo(1) },
-  { id: 3, name: "AWS Cloud Practitioner", cardCount: 120, lastWorkedOn: daysAgo(3) },
-  { id: 4, name: "US State Capitals", cardCount: 50, lastWorkedOn: daysAgo(12) },
-  { id: 5, name: "Music Theory: Intervals", cardCount: 24, lastWorkedOn: daysAgo(45) },
-  { id: 6, name: "Python Built-ins", cardCount: 1, lastWorkedOn: daysAgo(400) },
-];
+const EMPTY_SETS: FlashcardSet[] = [];
 
 export default function HomePage({
-  sets,
+  sets = EMPTY_SETS,
   onOpenSet,
   onEditSet,
   onDeleteSet,
   onNavigate,
   ...layoutProps
 }: HomePageProps) {
-  const [demoSets, setDemoSets] = useState<FlashcardSet[]>(DEMO_SETS);
   const [pendingDelete, setPendingDelete] = useState<FlashcardSet | null>(null);
-
-  const data = sets ?? demoSets;
 
   const sorted = useMemo(
     () =>
-      [...data].sort(
+      [...sets].sort(
         (a, b) => new Date(b.lastWorkedOn).getTime() - new Date(a.lastWorkedOn).getTime(),
       ),
-    [data],
+    [sets],
   );
   const recent = sorted.slice(0, 3);
 
@@ -71,10 +55,6 @@ export default function HomePage({
 
     setPendingDelete(null);
     await onDeleteSet?.(target);
-
-    if (!sets) {
-      setDemoSets((prev) => prev.filter((set) => set.id !== target.id));
-    }
   };
 
   return (

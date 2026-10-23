@@ -2,6 +2,13 @@
 
 .as-section { display: flex; flex-direction: column; gap: 12px; }
 
+.as-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
 .as-title {
   display: flex;
   align-items: center;

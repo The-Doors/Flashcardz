@@ -50,10 +50,7 @@ type AllSetsProps = {
   onRequestDelete: (set: FlashcardSet) => void;
 };
 
-/** Renders nothing when there are no sets. */
 export default function AllSets({ sets, onOpen, onEdit, onRequestDelete }: AllSetsProps) {
-  if (sets.length === 0) return null;
-
   return (
     <section className="as-section" aria-labelledby="as-title">
       <h2 id="as-title" className="as-title">
@@ -67,17 +64,23 @@ export default function AllSets({ sets, onOpen, onEdit, onRequestDelete }: AllSe
           <span>Cards</span>
         </div>
 
-        <ul>
-          {sets.map((set) => (
-            <SetRow
-              key={set.id}
-              set={set}
-              onOpen={onOpen}
-              onEdit={onEdit}
-              onRequestDelete={onRequestDelete}
-            />
-          ))}
-        </ul>
+        {sets.length > 0 ? (
+          <ul>
+            {sets.map((set) => (
+              <SetRow
+                key={set.id}
+                set={set}
+                onOpen={onOpen}
+                onEdit={onEdit}
+                onRequestDelete={onRequestDelete}
+              />
+            ))}
+          </ul>
+        ) : (
+          <div className="as-empty">
+            No flashcard sets found. Create your first set to get started!
+          </div>
+        )}
       </div>
     </section>
   );

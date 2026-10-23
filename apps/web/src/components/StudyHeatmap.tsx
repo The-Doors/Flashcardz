@@ -3,9 +3,15 @@ import { Flame } from "lucide-react";
 import type { ActivityData } from "./types";
 import "./StudyHeatmap.css";
 
-type HeatmapDay = { iso: string; count: number } | null;
+type CalendarDay = {
+  iso: string;
+  dayNum: number;
+  count: number;
+  isFuture: boolean;
+  isToday: boolean;
+} | null;
 
-const HEATMAP_WEEKS = 16;
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const toISO = (d: Date): string => {
   const y = d.getFullYear();
@@ -24,37 +30,65 @@ const levelFor = (count: number): number => {
 };
 
 /**
- * Builds columns of weeks (Sun -> Sat) ending with the current week.
- * Future days in the current week are returned as `null` so they render blank.
+ * Builds rows of weeks (Sun -> Sat) for the current calendar month.
+ * Days outside the current month (leading/trailing) are returned as `null`.
  */
-const buildWeeks = (activity: ActivityData): HeatmapDay[][] => {
+const buildCurrentMonth = (activity: ActivityData): {
+  monthLabel: string;
+  weeks: CalendarDay[][];
+} => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayIso = toISO(today);
 
-  const start = new Date(today);
-  start.setDate(today.getDate() - today.getDay() - (HEATMAP_WEEKS - 1) * 7);
+  const year = today.getFullYear();
+  const month = today.getMonth();
 
-  const weeks: HeatmapDay[][] = [];
-  for (let w = 0; w < HEATMAP_WEEKS; w++) {
-    const days: HeatmapDay[] = [];
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + w * 7 + d);
-      if (date > today) {
-        days.push(null);
-      } else {
-        const iso = toISO(date);
-        days.push({ iso, count: activity[iso] || 0 });
-      }
-    }
-    weeks.push(days);
+  const monthLabel = today.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const firstDayOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = firstDayOfMonth.getDay(); // 0 (Sun) to 6 (Sat)
+
+  const cells: CalendarDay[] = [];
+
+  // Leading empty slots before the 1st of the month
+  for (let i = 0; i < startOffset; i++) {
+    cells.push(null);
   }
-  return weeks;
+
+  // Actual days of the month
+  for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+    const date = new Date(year, month, dayNum);
+    const iso = toISO(date);
+    cells.push({
+      iso,
+      dayNum,
+      count: activity[iso] || 0,
+      isFuture: date > today,
+      isToday: iso === todayIso,
+    });
+  }
+
+  // Trailing empty slots to complete the final 7-day week row
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
+
+  // Chunk into 7-day rows
+  const weeks: CalendarDay[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+
+  return { monthLabel, weeks };
 };
 
 const computeStreak = (activity: ActivityData): number => {
   const day = new Date();
-  // Don't break the streak just because today hasn't been studied yet.
   if (!activity[toISO(day)]) day.setDate(day.getDate() - 1);
   let streak = 0;
   while (activity[toISO(day)] > 0) {
@@ -64,42 +98,25 @@ const computeStreak = (activity: ActivityData): number => {
   return streak;
 };
 
-// Deterministic placeholder data so the demo heat map doesn't flicker.
-export const buildDemoActivity = (): ActivityData => {
-  const data: ActivityData = {};
-  const today = new Date();
-  let seed = 7;
-  const rand = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-  for (let i = 0; i < HEATMAP_WEEKS * 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    if (rand() > 0.45) data[toISO(d)] = Math.floor(rand() * 40);
-  }
-  return data;
-};
-
 type StudyHeatmapProps = {
-  activity: ActivityData;
+  activity?: ActivityData;
 };
 
-/** Renders nothing when there is no study activity at all. */
-export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
-  const weeks = useMemo(() => buildWeeks(activity), [activity]);
+const EMPTY_ACTIVITY: ActivityData = {};
+
+export default function StudyHeatmap({ activity = EMPTY_ACTIVITY }: StudyHeatmapProps) {
+  const { monthLabel, weeks } = useMemo(() => buildCurrentMonth(activity), [activity]);
+  
   const total = useMemo(
     () => weeks.flat().reduce((sum, d) => sum + (d ? d.count : 0), 0),
     [weeks],
   );
   const streak = useMemo(() => computeStreak(activity), [activity]);
 
-  if (total === 0) return null;
-
   return (
     <section className="fc-heatmap" aria-label="Study activity">
       <div className="fc-heatmap-head">
-        <span className="fc-heatmap-title">Study activity</span>
+        <span className="fc-heatmap-title">{monthLabel}</span>
         <span className="fc-heatmap-streak" title="Current streak">
           <Flame size={14} aria-hidden="true" />
           {streak}d
@@ -107,31 +124,44 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
       </div>
 
       <div
-        className="fc-heatmap-grid"
+        className="fc-calendar"
         role="img"
-        aria-label={`${total} cards studied in the last ${HEATMAP_WEEKS} weeks`}
+        aria-label={`${total} cards studied in ${monthLabel}`}
       >
-        {weeks.map((week, wi) => (
-          <div className="fc-heatmap-col" key={wi}>
-            {week.map((day, di) =>
-              day ? (
-                <span
-                  key={di}
-                  className={`fc-cell lvl-${levelFor(day.count)}`}
-                  title={`${day.count} card${day.count === 1 ? "" : "s"} on ${day.iso}`}
-                />
-              ) : (
-                <span key={di} className="fc-cell empty" />
-              ),
-            )}
-          </div>
-        ))}
+        <div className="fc-calendar-weekdays" aria-hidden="true">
+          {WEEKDAYS.map((day, i) => (
+            <span key={i} className="fc-weekday">
+              {day}
+            </span>
+          ))}
+        </div>
+
+        <div className="fc-calendar-grid">
+          {weeks.flat().map((day, idx) =>
+            day ? (
+              <span
+                key={day.iso}
+                className={[
+                  "fc-cell",
+                  "fc-cal-cell",
+                  day.isFuture ? "future" : `lvl-${levelFor(day.count)}`,
+                  day.isToday ? "today" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                title={`${day.count} card${day.count === 1 ? "" : "s"} on ${day.iso}`}
+              >
+                {day.dayNum}
+              </span>
+            ) : (
+              <span key={`pad-${idx}`} className="fc-cell fc-cal-cell empty" />
+            ),
+          )}
+        </div>
       </div>
 
       <div className="fc-heatmap-foot">
-        <span>
-          {total} cards in {HEATMAP_WEEKS} weeks
-        </span>
+        <span>{total} cards this month</span>
         <span className="fc-legend" aria-hidden="true">
           Less
           {[0, 1, 2, 3, 4].map((l) => (

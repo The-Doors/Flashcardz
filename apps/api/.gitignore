@@ -20,8 +20,14 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/config
+/storage/framework/data
 /vendor
 _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+**/caddy
+frankenphp
+frankenphp-worker.php

@@ -1,0 +1,102 @@
+/* Uses the theme variables defined on .fc-app in AppLayout.css */
+
+.fc-heatmap {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.fc-heatmap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.fc-heatmap-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 12px;
+}
+.fc-heatmap-grid { display: flex; gap: 3px; }
+.fc-heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+
+.fc-cell {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--cell-0);
+}
+.fc-cell.lvl-1 { background: var(--cell-1); }
+.fc-cell.lvl-2 { background: var(--cell-2); }
+.fc-cell.lvl-3 { background: var(--cell-3); }
+.fc-cell.lvl-4 { background: var(--cell-4); }
+.fc-cell.empty { background: transparent; }
+
+.fc-heatmap-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.fc-legend { display: inline-flex; align-items: center; gap: 3px; }
+.fc-legend .fc-cell:first-of-type { margin-left: 4px; }
+.fc-legend .fc-cell:last-of-type { margin-right: 4px; }
+.fc-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fc-calendar-weekdays,
+.fc-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.fc-weekday {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.5;
+  user-select: none;
+}
+
+.fc-cal-cell {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border-radius: 4px;
+  user-select: none;
+}
+
+/* Future days in the current month still show their date number, just dimmed */
+.fc-cal-cell.future {
+  opacity: 0.35;
+  border: 1px dashed currentColor;
+  background: transparent;
+}
+
+/* Subtle highlight ring around today's date */
+.fc-cal-cell.today {
+  outline: 1.5px solid currentColor;
+  outline-offset: -1px;
+  font-weight: 700;
+}
+
+/* Padding cells before the 1st and after the last day of the month */
+.fc-cal-cell.empty {
+  background: transparent;
+  pointer-events: none;
+}

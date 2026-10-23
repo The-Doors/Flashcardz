@@ -1,18 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Button, Group, Stack, Title } from "@mantine/core";
+import { createFileRoute } from "@tanstack/react-router";
+import HomePage from "../components/HomePage";
 
-export const Route = createFileRoute("/")({ component: App });
-
-function App() {
-	const navigate = useNavigate();
-	return (
-		<Group justify="center" pt="sm">
-			<Stack>
-				<Title>Sup Bruh</Title>
-				<Button size="sm" onClick={() => navigate({ to: "/login" })}>
-					Login
-				</Button>
-			</Stack>
-		</Group>
-	);
-}
+export const Route = createFileRoute("/")({
+  component: HomePage,
+});

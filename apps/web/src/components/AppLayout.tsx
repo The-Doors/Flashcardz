@@ -292,11 +292,6 @@ export default function AppLayout({
   };
 
   const handleOpenAuth = (mode: AuthMode) => {
-    // Route directly to your existing /login and /signup pages unless custom modal callbacks are passed
-    if (!onSignIn && !onSignUp) {
-      void routerNavigate({ to: mode === "signin" ? "/login" : "/signup" });
-      return;
-    }
     setAuthMode(mode);
   };
 

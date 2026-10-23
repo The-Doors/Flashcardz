@@ -1,0 +1,346 @@
+/* Uses the theme variables defined on .fc-app in AppLayout.css */
+
+.cp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cp-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cp-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Filter Button & Popover */
+.cp-filter-wrap {
+  position: relative;
+}
+
+.cp-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.cp-filter-btn:hover,
+.cp-filter-btn.active {
+  border-color: var(--accent);
+}
+
+.cp-filter-summary {
+  color: var(--text-muted);
+  font-weight: 500;
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+}
+
+.cp-filter-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cp-filter-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 280px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cp-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.cp-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+}
+
+.cp-menu-item:hover {
+  background: var(--panel-hover);
+}
+
+.cp-menu-item.selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cp-check {
+  margin-left: auto;
+}
+
+.cp-divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.cp-type-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cp-type-chip {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cp-type-chip:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.cp-type-chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.cp-reset-btn {
+  padding: 7px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.cp-reset-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+/* Quick Category Pills Row */
+.cp-categories {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cp-category-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.cp-category-pill:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.cp-category-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* Community Cards Grid */
+.cp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.cp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 148px;
+  margin-bottom: 7px;
+  padding: 16px 38px 14px 16px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 0 -1px var(--panel), 0 5px 0 -1px var(--border),
+    0 8px 0 -3px var(--panel), 0 9px 0 -3px var(--border);
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.cp-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.cp-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cp-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cp-studies {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cp-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cp-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cp-card-foot {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cp-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cp-chevron {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  color: var(--text-muted);
+}
+
+.cp-card:hover .cp-chevron {
+  color: var(--accent);
+}
+
+/* Empty Placeholder Cards */
+.cp-card-empty {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.cp-empty-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cp-empty-msg strong {
+  color: var(--text);
+  font-size: 14px;
+}

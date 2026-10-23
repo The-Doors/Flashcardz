@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import {
   Search,
@@ -51,14 +52,14 @@ type TopBarProps = {
   theme: Theme;
   onToggleTheme: () => void;
   onSearch?: (query: string) => void;
-  onNavigate?: (id: NavId) => void;
+  onNavigate: (id: NavId) => void;
   user?: UserInfo;
   onLogout?: () => void;
   onOpenAuth: (mode: AuthMode) => void;
 };
 type SideBarProps = {
   active: NavId;
-  onNavigate?: (id: NavId) => void;
+  onNavigate: (id: NavId) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   activity?: ActivityData;
@@ -70,6 +71,16 @@ const NAV_ITEMS: NavItem[] = [
   { id: "tutorial", label: "Tutorial", icon: GraduationCap },
   { id: "groups", label: "Groups", icon: Users },
 ];
+
+const NAV_PATHS: Record<NavId, string> = {
+  home: "/",
+  community: "/community",
+  create: "/create",
+  tutorial: "/tutorial",
+  groups: "/groups",
+  settings: "/settings",
+  profile: "/profile",
+};
 
 const THEME_KEY = "flashcards-theme";
 
@@ -122,7 +133,7 @@ function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onL
 
   return (
     <header className="fc-topbar">
-      <button className="fc-brand" onClick={() => onNavigate?.("home")} aria-label={`${appName} home`}>
+      <button className="fc-brand" onClick={() => onNavigate("home")} aria-label={`${appName} home`}>
         <Layers size={22} aria-hidden="true" />
         <span>{appName}</span>
       </button>
@@ -151,36 +162,36 @@ function TopBar({ appName, theme, onToggleTheme, onSearch, onNavigate, user, onL
         </button>
 
         {user ? (
-        <div className="fc-user" ref={menuRef}>
-          <button
-            className="fc-avatar"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-label="User settings"
-          >
-            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initial}
-          </button>
+          <div className="fc-user" ref={menuRef}>
+            <button
+              className="fc-avatar"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label="User settings"
+            >
+              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initial}
+            </button>
 
-          {menuOpen && (
-            <div className="fc-menu" role="menu">
-              <div className="fc-menu-head">
-                <strong>{user?.name || "Guest"}</strong>
-                {user?.email && <span>{user.email}</span>}
+            {menuOpen && (
+              <div className="fc-menu" role="menu">
+                <div className="fc-menu-head">
+                  <strong>{user?.name || "Guest"}</strong>
+                  {user?.email && <span>{user.email}</span>}
+                </div>
+                <button role="menuitem" onClick={() => { setMenuOpen(false); onNavigate("profile"); }}>
+                  <User size={16} aria-hidden="true" /> Profile
+                </button>
+                <button role="menuitem" onClick={() => { setMenuOpen(false); onNavigate("settings"); }}>
+                  <Settings size={16} aria-hidden="true" /> Account settings
+                </button>
+                <hr />
+                <button role="menuitem" onClick={() => { setMenuOpen(false); onLogout?.(); }}>
+                  <LogOut size={16} aria-hidden="true" /> Log out
+                </button>
               </div>
-              <button role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.("profile"); }}>
-                <User size={16} aria-hidden="true" /> Profile
-              </button>
-              <button role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.("settings"); }}>
-                <Settings size={16} aria-hidden="true" /> Account settings
-              </button>
-              <hr />
-              <button role="menuitem" onClick={() => { setMenuOpen(false); onLogout?.(); }}>
-                <LogOut size={16} aria-hidden="true" /> Log out
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         ) : (
           <div className="fc-auth-actions">
             <button className="fc-btn-ghost" onClick={() => onOpenAuth("signin")}>
@@ -205,7 +216,7 @@ function SideBar({ active, onNavigate, collapsed, onToggleCollapsed, activity }:
     <button
       key={id}
       className={`fc-nav-item ${active === id ? "active" : ""}`}
-      onClick={() => onNavigate?.(id)}
+      onClick={() => onNavigate(id)}
       aria-current={active === id ? "page" : undefined}
       title={collapsed ? label : undefined}
     >
@@ -218,7 +229,7 @@ function SideBar({ active, onNavigate, collapsed, onToggleCollapsed, activity }:
     <aside className={`fc-sidebar ${collapsed ? "collapsed" : ""}`} aria-label="Primary">
       <nav className="fc-nav">{NAV_ITEMS.map(renderItem)}</nav>
 
-      {<StudyHeatmap activity={activity} />}
+      <StudyHeatmap activity={activity} />
 
       <div className="fc-sidebar-bottom">
         {renderItem({ id: "settings", label: "Settings", icon: Settings })}
@@ -252,6 +263,8 @@ export default function AppLayout({
   onSignUp,
   activity,
 }: AppLayoutProps) {
+  const routerNavigate = useNavigate();
+
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return (localStorage.getItem(THEME_KEY) as Theme | null) || "dark";
@@ -270,6 +283,23 @@ export default function AppLayout({
     }
   }, [theme]);
 
+  const handleNavigate = (id: NavId) => {
+    if (onNavigate) {
+      onNavigate(id);
+      return;
+    }
+    void routerNavigate({ to: NAV_PATHS[id] });
+  };
+
+  const handleOpenAuth = (mode: AuthMode) => {
+    // Route directly to your existing /login and /signup pages unless custom modal callbacks are passed
+    if (!onSignIn && !onSignUp) {
+      void routerNavigate({ to: mode === "signin" ? "/login" : "/signup" });
+      return;
+    }
+    setAuthMode(mode);
+  };
+
   return (
     <div className="fc-app" data-theme={theme}>
       <TopBar
@@ -277,15 +307,15 @@ export default function AppLayout({
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
         onSearch={onSearch}
-        onNavigate={onNavigate}
+        onNavigate={handleNavigate}
         user={user}
         onLogout={onLogout}
-        onOpenAuth={setAuthMode}
+        onOpenAuth={handleOpenAuth}
       />
       <div className="fc-body">
         <SideBar
           active={active}
-          onNavigate={onNavigate}
+          onNavigate={handleNavigate}
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
           activity={activity}

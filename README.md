@@ -6,18 +6,35 @@
 
 Prerequisites:
 
-- python
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- Docker (Windows: use WSL2)
 - [node](https://nodejs.org/en/download)
 - [supabase cli](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
 ### Api
 
-(def could change, i dont totally get fastapi)
+First setup, from the repository root (keep your existing `.env` and `APP_KEY` if already configured):
 
 ```
+supabase start
 cd apps/api
-uv run fastapi dev src/main.py --app app
+cp .env.example .env
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app composer:2 install --no-scripts --ignore-platform-reqs
+./vendor/bin/sail up -d --build
+./vendor/bin/sail composer install
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan optimize:clear
+```
+
+The API uses port 8000. 
+
+For later starts, run `supabase start` from the repository root and `./vendor/bin/sail up -d` from `apps/api`. 
+
+To see logs, use
+
+```
+./vendor/bin/sail logs -f
+./vendor/bin/sail artisan pail # i think only exceptions??
 ```
 
 ### Web
@@ -43,6 +60,16 @@ this **should** start the local supabase server and show you the env vars you ne
 
 ## Features
 
+Cards will primarily contain Markdown. Separate the front and back with `<!-- card:back -->` on its own line; 
+
+```markdown
+What is **ATP**?
+
+<!-- card:back -->
+
+The cell's main energy-carrying molecule.
+```
+
 List of features that would be cool to exist in some way
 
 - Creation of flash cards using markdown for front and back
@@ -67,7 +94,7 @@ List of features that would be cool to exist in some way
 
 May change, but will probably be something like this:
 
-- Fastapi (api)
+- Laravel (api)
 - React (web)
 - Postgres
 - Swift (if mobile)

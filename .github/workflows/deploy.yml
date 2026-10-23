@@ -9,9 +9,15 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-24.04-arm
+    outputs:
+      owner: ${{ steps.owner.outputs.OWNER }}
 
     steps:
       - name: Checkout repository
@@ -29,7 +35,7 @@ jobs:
 
       - name: Lowercase repository owner
         id: owner
-        run: echo "OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push React
         uses: docker/build-push-action@v6
@@ -58,10 +64,10 @@ jobs:
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-frontend:latest
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-frontend:${{ github.sha }}
 
-      - name: Build and push FastAPI
+      - name: Build and push Laravel Octane
         uses: docker/build-push-action@v6
         with:
-          context: ./apps/api
+          context: .
           file: ./apps/api/Dockerfile
           platforms: linux/arm64
           push: true
@@ -72,16 +78,35 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-24.04-arm
+    env:
+      GHCR_OWNER: ${{ needs.build.outputs.owner }}
+      IMAGE_TAG: ${{ github.sha }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy production Compose configuration
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: docker-compose.yml
+          target: my-app
+
       - name: Deploy to Ubuntu VM
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
+          envs: GHCR_OWNER,IMAGE_TAG
           script: |
+            set -eu
             cd ~/my-app
+            docker compose config --quiet
             docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose run --rm --no-deps backend php artisan migrate --force --no-interaction
+            docker compose up -d --remove-orphans --wait --wait-timeout 120
             docker image prune -f

@@ -7,5 +7,16 @@
 **/__pycache__
 **/.env
 **/.env.*
+**/vendor
+**/frankenphp
+**/frankenphp-worker.php
+**/auth.json
+**/.phpunit*
+**/.agents
+**/.claude
+apps/api/bootstrap/cache/*
+apps/api/storage/**
+apps/api/public/hot
+apps/api/public/storage
 .git
 .crush

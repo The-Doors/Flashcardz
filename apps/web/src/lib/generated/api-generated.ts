@@ -16,8 +16,6 @@ export interface Card {
   created_at: string | null;
   /** @nullable */
   updated_at: string | null;
-  /** @nullable */
-  deleted_at: string | null;
 }
 
 export interface CopyCardRequest {
@@ -37,8 +35,6 @@ export interface Deck {
   created_at: string | null;
   /** @nullable */
   updated_at: string | null;
-  /** @nullable */
-  deleted_at: string | null;
 }
 
 export type LengthAwarePaginatorLinks = {[key: string]: unknown};

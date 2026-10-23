@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CreateRouteImport } from './routes/create'
+import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 
@@ -36,6 +37,11 @@ const CreateRoute = CreateRouteImport.update({
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
 }
@@ -69,21 +77,36 @@ export interface FileRoutesById {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth-callback' | '/community' | '/create' | '/login' | '/signup'
+    | '/'
+    | '/auth-callback'
+    | '/community'
+    | '/create'
+    | '/groups'
+    | '/login'
+    | '/signup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth-callback' | '/community' | '/create' | '/login' | '/signup'
+  to:
+    | '/'
+    | '/auth-callback'
+    | '/community'
+    | '/create'
+    | '/groups'
+    | '/login'
+    | '/signup'
   id:
     | '__root__'
     | '/'
     | '/auth-callback'
     | '/community'
     | '/create'
+    | '/groups'
     | '/login'
     | '/signup'
   fileRoutesById: FileRoutesById
@@ -93,6 +116,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   CommunityRoute: typeof CommunityRoute
   CreateRoute: typeof CreateRoute
+  GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
@@ -127,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -149,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   CommunityRoute: CommunityRoute,
   CreateRoute: CreateRoute,
+  GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }

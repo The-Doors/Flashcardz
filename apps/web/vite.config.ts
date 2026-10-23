@@ -15,7 +15,7 @@ const config = defineConfig(({ command }) => ({
 		nitro({
 			routeRules:
 				command === "serve"
-					? { "/api/**": { proxy: "http://127.0.0.1:8000/**" } }
+					? { "/api/**": { proxy: "http://127.0.0.1:8000/api/**" } }
 					: {},
 			rollupConfig: {
 				external: [/^@sentry\//],

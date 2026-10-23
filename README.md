@@ -60,6 +60,16 @@ this **should** start the local supabase server and show you the env vars you ne
 
 ## Features
 
+Cards will primarily contain Markdown. Separate the front and back with `<!-- card:back -->` on its own line; 
+
+```markdown
+What is **ATP**?
+
+<!-- card:back -->
+
+The cell's main energy-carrying molecule.
+```
+
 List of features that would be cool to exist in some way
 
 - Creation of flash cards using markdown for front and back

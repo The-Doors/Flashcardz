@@ -28,7 +28,7 @@ class UserControllerTest extends PostgresTestCase
     {
         Http::preventStrayRequests();
 
-        $this->get('/api/user', ['Accept' => 'text/html'])
+        $this->get('/api/auth/me', ['Accept' => 'text/html'])
             ->assertUnauthorized()->assertJsonPath('message', 'Unauthenticated.');
         Http::assertNothingSent();
     }
@@ -37,21 +37,23 @@ class UserControllerTest extends PostgresTestCase
     {
         Http::preventStrayRequests();
 
-        $this->withToken('not-a-jwt')->getJson('/api/user')->assertUnauthorized();
+        $this->withToken('not-a-jwt')->getJson('/api/auth/me')->assertUnauthorized();
         Http::assertNothingSent();
     }
 
     public function test_returns_the_existing_profile_through_the_default_guard(): void
     {
         $this->resetDatabase();
+        $this->travelTo('2026-10-22 12:00:00 UTC');
         DB::table('auth.users')->insert(['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
         $user = User::factory()->create(['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'username' => 'Original']);
         $token = $this->tokenWithUsername('ChangedMetadata');
 
-        $this->withToken($token)->getJson('/api/user')->assertOk()->assertExactJson([
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertExactJson([
             'id' => $user->id,
             'username' => 'Original',
-            'username_lowercase' => 'original',
+            'created_at' => '2026-10-22T12:00:00.000000Z',
+            'updated_at' => '2026-10-22T12:00:00.000000Z',
         ]);
         $this->assertSame($user->id, Auth::user()->id);
         $this->assertDatabaseCount('app.users', 1);
@@ -60,13 +62,15 @@ class UserControllerTest extends PostgresTestCase
     public function test_provisions_a_profile_from_verified_username_metadata(): void
     {
         $this->resetDatabase();
+        $this->travelTo('2026-10-22 12:00:00 UTC');
         DB::table('auth.users')->insert(['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
         $token = $this->tokenWithUsername('Casey');
 
-        $this->withToken($token)->getJson('/api/user')->assertOk()->assertExactJson([
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertExactJson([
             'id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
             'username' => 'Casey',
-            'username_lowercase' => 'casey',
+            'created_at' => '2026-10-22T12:00:00.000000Z',
+            'updated_at' => '2026-10-22T12:00:00.000000Z',
         ]);
         $this->assertDatabaseHas('app.users', ['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'username_lowercase' => 'casey']);
     }
@@ -78,7 +82,7 @@ class UserControllerTest extends PostgresTestCase
         DB::table('auth.users')->insert(['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
         $token = $this->tokenWithUsername($username);
 
-        $this->withToken($token)->getJson('/api/user')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
         $this->assertDatabaseCount('app.users', 0);
     }
 
@@ -93,7 +97,9 @@ class UserControllerTest extends PostgresTestCase
         DB::table('auth.users')->insert(['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
         $token = $this->tokenWithUsername(str_repeat('A', 29));
 
-        $this->withToken($token)->getJson('/api/user')->assertOk()->assertJsonPath('username_lowercase', str_repeat('a', 29));
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk()
+            ->assertJsonPath('username', str_repeat('A', 29))->assertJsonMissingPath('username_lowercase');
+        $this->assertDatabaseHas('app.users', ['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'username_lowercase' => str_repeat('a', 29)]);
     }
 
     public function test_returns_409_for_a_case_insensitive_username_conflict(): void
@@ -106,7 +112,7 @@ class UserControllerTest extends PostgresTestCase
         User::factory()->create(['id' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'username' => 'Casey']);
         $token = $this->tokenWithUsername('CASEY');
 
-        $this->withToken($token)->getJson('/api/user')->assertConflict()->assertJsonPath('message', 'Username is already taken');
+        $this->withToken($token)->getJson('/api/auth/me')->assertConflict()->assertJsonPath('message', 'Username is already taken');
         $this->assertDatabaseCount('app.users', 1);
         $this->assertDatabaseMissing('app.users', ['id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
     }
@@ -116,7 +122,7 @@ class UserControllerTest extends PostgresTestCase
         $this->resetDatabase();
         $token = $this->tokenWithUsername('Casey');
 
-        $this->withToken($token)->getJson('/api/user')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
         $this->assertDatabaseCount('app.users', 0);
     }
 
@@ -126,7 +132,7 @@ class UserControllerTest extends PostgresTestCase
         Http::preventStrayRequests();
         Http::fake(['https://internal.test/keys' => Http::failedConnection()]);
 
-        $this->withToken($token)->getJson('/api/user')->assertStatus(502)->assertJsonPath('message', 'Unable to reach Supabase Auth');
+        $this->withToken($token)->getJson('/api/auth/me')->assertStatus(502)->assertJsonPath('message', 'Unable to reach Supabase Auth');
     }
 
     private function tokenWithUsername(mixed $username): string

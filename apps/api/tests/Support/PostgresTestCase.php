@@ -2,15 +2,25 @@
 
 namespace Tests\Support;
 
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 abstract class PostgresTestCase extends TestCase
 {
+    protected function createUser(): User
+    {
+        $user = User::factory()->make();
+        DB::table('auth.users')->insert(['id' => $user->id]);
+        $user->save();
+
+        return $user;
+    }
+
     protected function resetDatabase(bool $migrate = true): void
     {
         if (! getenv('TEST_DB_HOST')) {
-            $this->markTestSkipped('Set TEST_DB_HOST for a disposable PostgreSQL database named testing on TEST_DB_PORT (default 55432).');
+            $this->markTestSkipped('Run composer test to start disposable PostgreSQL automatically, or set TEST_DB_HOST and TEST_DB_PORT for an existing testing database.');
         }
 
         config(['database.connections.pgsql_testing' => [

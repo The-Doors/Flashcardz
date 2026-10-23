@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trimStrings(except: ['content']);
         $middleware->alias([
             'optional-auth' => OptionalAuthenticate::class,
         ]);

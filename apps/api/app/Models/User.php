@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 #[Fillable(['id', 'username'])]
@@ -29,5 +30,10 @@ class User extends Authenticatable
             'username' => $value,
             'username_lowercase' => mb_strtolower($value),
         ]);
+    }
+
+    public function decks(): HasMany
+    {
+        return $this->hasMany(Deck::class);
     }
 }

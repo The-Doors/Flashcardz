@@ -15,5 +15,6 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Profiles are provisioned from Supabase identities on authenticated requests.
+        $this->call(DeckSeeder::class);
     }
 }

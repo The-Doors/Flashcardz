@@ -4,6 +4,98 @@
  * Laravel
  * OpenAPI spec version: 0.0.1
  */
+export interface Card {
+  id: number;
+  deck_id: number;
+  /** @nullable */
+  creator_id: string | null;
+  content: string;
+  /** @nullable */
+  source_card_id: number | null;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+  /** @nullable */
+  deleted_at: string | null;
+}
+
+export interface CopyCardRequest {
+  deck_id: number;
+}
+
+export interface Deck {
+  id: number;
+  user_id: string;
+  is_public: boolean;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  source_deck_id: number | null;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+  /** @nullable */
+  deleted_at: string | null;
+}
+
+export type LengthAwarePaginatorLinks = {[key: string]: unknown};
+
+export interface LengthAwarePaginator {
+  current_page: number;
+  data: string;
+  first_page_url: string;
+  /** @nullable */
+  from: number | null;
+  last_page: number;
+  last_page_url: string;
+  links: LengthAwarePaginatorLinks;
+  next_page_url: string;
+  /** @nullable */
+  path: string | null;
+  per_page: number;
+  /** @nullable */
+  prev_page_url: string | null;
+  /** @nullable */
+  to: number | null;
+  total: number;
+}
+
+export interface StoreCardRequest {
+  /** @maxLength 10000 */
+  content: string;
+  deck_id: number;
+}
+
+export interface StoreDeckRequest {
+  /** @maxLength 255 */
+  name: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  description?: string | null;
+  is_public?: boolean;
+}
+
+export interface UpdateCardRequest {
+  content?: string;
+  deck_id?: number;
+}
+
+export interface UpdateDeckRequest {
+  /** @maxLength 255 */
+  name?: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  description?: string | null;
+  is_public?: boolean;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -18,11 +110,813 @@ export type AuthenticationExceptionResponse = {
   message: string;
 };
 
+export type AuthorizationExceptionResponse = {
+  /** Error overview. */
+  message: string;
+};
+
+export type ModelNotFoundExceptionResponse = {
+  /** Error overview. */
+  message: string;
+};
+
+/**
+ * A detailed description of each field that failed validation.
+ */
+export type ValidationExceptionResponseErrors = {[key: string]: string[]};
+
+export type ValidationExceptionResponse = {
+  /** Errors overview. */
+  message: string;
+  /** A detailed description of each field that failed validation. */
+  errors: ValidationExceptionResponseErrors;
+};
+
+export type CardsIndexParams = {
+deck_id?: number;
+};
+
+export type CardsIndex200Links = {[key: string]: unknown};
+
+export type CardsIndex200 = {
+  current_page: number;
+  data: string;
+  first_page_url: string;
+  /** @nullable */
+  from: number | null;
+  last_page: string;
+  last_page_url: string;
+  links: CardsIndex200Links;
+  next_page_url: string;
+  /** @nullable */
+  path: string | null;
+  per_page: number;
+  /** @nullable */
+  prev_page_url: string | null;
+  /** @nullable */
+  to: number | null;
+  total: string;
+};
+
 export type ExampleOptionalAuth200 = {
   message: 'User not authenticated, but still returning this. This is intentional to show off two different things.';
 } | {
   message: 'User authenticated';
 };
+
+export type cardsIndexResponse200 = {
+  data: CardsIndex200
+  status: 200
+}
+
+export type cardsIndexResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsIndexResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type cardsIndexResponseSuccess = (cardsIndexResponse200) & {
+  headers: Headers;
+};
+export type cardsIndexResponseError = (cardsIndexResponse403 | cardsIndexResponse422) & {
+  headers: Headers;
+};
+
+export type cardsIndexResponse = (cardsIndexResponseSuccess | cardsIndexResponseError)
+
+export const getCardsIndexUrl = (params?: CardsIndexParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/cards?${stringifiedParams}` : `/api/cards`
+}
+
+export const cardsIndex = async (params?: CardsIndexParams, options?: RequestInit): Promise<cardsIndexResponse> => {
+
+  const res = await fetch(getCardsIndexUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as cardsIndexResponse
+}
+
+
+
+export type cardsStoreResponse201 = {
+  data: Card
+  status: 201
+}
+
+export type cardsStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type cardsStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type cardsStoreResponseSuccess = (cardsStoreResponse201) & {
+  headers: Headers;
+};
+export type cardsStoreResponseError = (cardsStoreResponse401 | cardsStoreResponse403 | cardsStoreResponse422) & {
+  headers: Headers;
+};
+
+export type cardsStoreResponse = (cardsStoreResponseSuccess | cardsStoreResponseError)
+
+export const getCardsStoreUrl = () => {
+
+
+
+
+  return `/api/cards`
+}
+
+export const cardsStore = async (storeCardRequest: StoreCardRequest, options?: RequestInit): Promise<cardsStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCardsStoreUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(storeCardRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as cardsStoreResponse
+}
+
+
+
+export type cardsShowResponse200 = {
+  data: Card
+  status: 200
+}
+
+export type cardsShowResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsShowResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type cardsShowResponseSuccess = (cardsShowResponse200) & {
+  headers: Headers;
+};
+export type cardsShowResponseError = (cardsShowResponse403 | cardsShowResponse404) & {
+  headers: Headers;
+};
+
+export type cardsShowResponse = (cardsShowResponseSuccess | cardsShowResponseError)
+
+export const getCardsShowUrl = (card: number,) => {
+
+
+
+
+  return `/api/cards/${card}`
+}
+
+export const cardsShow = async (card: number, options?: RequestInit): Promise<cardsShowResponse> => {
+
+  const res = await fetch(getCardsShowUrl(card),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsShowResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as cardsShowResponse
+}
+
+
+
+export type cardsUpdateResponse200 = {
+  data: Card
+  status: 200
+}
+
+export type cardsUpdateResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type cardsUpdateResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsUpdateResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type cardsUpdateResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type cardsUpdateResponseSuccess = (cardsUpdateResponse200) & {
+  headers: Headers;
+};
+export type cardsUpdateResponseError = (cardsUpdateResponse401 | cardsUpdateResponse403 | cardsUpdateResponse404 | cardsUpdateResponse422) & {
+  headers: Headers;
+};
+
+export type cardsUpdateResponse = (cardsUpdateResponseSuccess | cardsUpdateResponseError)
+
+export const getCardsUpdateUrl = (card: number,) => {
+
+
+
+
+  return `/api/cards/${card}`
+}
+
+export const cardsUpdate = async (card: number,
+    updateCardRequest?: UpdateCardRequest, options?: RequestInit): Promise<cardsUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCardsUpdateUrl(card),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCardRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsUpdateResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as cardsUpdateResponse
+}
+
+
+
+export type cardsDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type cardsDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type cardsDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type cardsDestroyResponseSuccess = (cardsDestroyResponse204) & {
+  headers: Headers;
+};
+export type cardsDestroyResponseError = (cardsDestroyResponse401 | cardsDestroyResponse403 | cardsDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type cardsDestroyResponse = (cardsDestroyResponseSuccess | cardsDestroyResponseError)
+
+export const getCardsDestroyUrl = (card: number,) => {
+
+
+
+
+  return `/api/cards/${card}`
+}
+
+export const cardsDestroy = async (card: number, options?: RequestInit): Promise<cardsDestroyResponse> => {
+
+  const res = await fetch(getCardsDestroyUrl(card),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as cardsDestroyResponse
+}
+
+
+
+export type cardsCopyResponse201 = {
+  data: Card
+  status: 201
+}
+
+export type cardsCopyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type cardsCopyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type cardsCopyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type cardsCopyResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type cardsCopyResponseSuccess = (cardsCopyResponse201) & {
+  headers: Headers;
+};
+export type cardsCopyResponseError = (cardsCopyResponse401 | cardsCopyResponse403 | cardsCopyResponse404 | cardsCopyResponse422) & {
+  headers: Headers;
+};
+
+export type cardsCopyResponse = (cardsCopyResponseSuccess | cardsCopyResponseError)
+
+export const getCardsCopyUrl = (card: number,) => {
+
+
+
+
+  return `/api/cards/${card}/copy`
+}
+
+export const cardsCopy = async (card: number,
+    copyCardRequest: CopyCardRequest, options?: RequestInit): Promise<cardsCopyResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getCardsCopyUrl(card),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(copyCardRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cardsCopyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as cardsCopyResponse
+}
+
+
+
+export type decksIndexResponse200 = {
+  data: LengthAwarePaginator
+  status: 200
+}
+
+export type decksIndexResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksIndexResponseSuccess = (decksIndexResponse200) & {
+  headers: Headers;
+};
+export type decksIndexResponseError = (decksIndexResponse403) & {
+  headers: Headers;
+};
+
+export type decksIndexResponse = (decksIndexResponseSuccess | decksIndexResponseError)
+
+export const getDecksIndexUrl = () => {
+
+
+
+
+  return `/api/decks`
+}
+
+export const decksIndex = async ( options?: RequestInit): Promise<decksIndexResponse> => {
+
+  const res = await fetch(getDecksIndexUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksIndexResponse
+}
+
+
+
+export type decksStoreResponse201 = {
+  data: Deck
+  status: 201
+}
+
+export type decksStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type decksStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type decksStoreResponseSuccess = (decksStoreResponse201) & {
+  headers: Headers;
+};
+export type decksStoreResponseError = (decksStoreResponse401 | decksStoreResponse403 | decksStoreResponse422) & {
+  headers: Headers;
+};
+
+export type decksStoreResponse = (decksStoreResponseSuccess | decksStoreResponseError)
+
+export const getDecksStoreUrl = () => {
+
+
+
+
+  return `/api/decks`
+}
+
+export const decksStore = async (storeDeckRequest: StoreDeckRequest, options?: RequestInit): Promise<decksStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getDecksStoreUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(storeDeckRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksStoreResponse
+}
+
+
+
+export type decksShowResponse200 = {
+  data: Deck
+  status: 200
+}
+
+export type decksShowResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksShowResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type decksShowResponseSuccess = (decksShowResponse200) & {
+  headers: Headers;
+};
+export type decksShowResponseError = (decksShowResponse403 | decksShowResponse404) & {
+  headers: Headers;
+};
+
+export type decksShowResponse = (decksShowResponseSuccess | decksShowResponseError)
+
+export const getDecksShowUrl = (deck: number,) => {
+
+
+
+
+  return `/api/decks/${deck}`
+}
+
+export const decksShow = async (deck: number, options?: RequestInit): Promise<decksShowResponse> => {
+
+  const res = await fetch(getDecksShowUrl(deck),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksShowResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksShowResponse
+}
+
+
+
+export type decksUpdateResponse200 = {
+  data: Deck
+  status: 200
+}
+
+export type decksUpdateResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type decksUpdateResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksUpdateResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type decksUpdateResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type decksUpdateResponseSuccess = (decksUpdateResponse200) & {
+  headers: Headers;
+};
+export type decksUpdateResponseError = (decksUpdateResponse401 | decksUpdateResponse403 | decksUpdateResponse404 | decksUpdateResponse422) & {
+  headers: Headers;
+};
+
+export type decksUpdateResponse = (decksUpdateResponseSuccess | decksUpdateResponseError)
+
+export const getDecksUpdateUrl = (deck: number,) => {
+
+
+
+
+  return `/api/decks/${deck}`
+}
+
+export const decksUpdate = async (deck: number,
+    updateDeckRequest?: UpdateDeckRequest, options?: RequestInit): Promise<decksUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getDecksUpdateUrl(deck),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateDeckRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksUpdateResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksUpdateResponse
+}
+
+
+
+export type decksDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type decksDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type decksDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type decksDestroyResponseSuccess = (decksDestroyResponse204) & {
+  headers: Headers;
+};
+export type decksDestroyResponseError = (decksDestroyResponse401 | decksDestroyResponse403 | decksDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type decksDestroyResponse = (decksDestroyResponseSuccess | decksDestroyResponseError)
+
+export const getDecksDestroyUrl = (deck: number,) => {
+
+
+
+
+  return `/api/decks/${deck}`
+}
+
+export const decksDestroy = async (deck: number, options?: RequestInit): Promise<decksDestroyResponse> => {
+
+  const res = await fetch(getDecksDestroyUrl(deck),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as decksDestroyResponse
+}
+
+
+
+export type decksCopyResponse201 = {
+  data: Deck
+  status: 201
+}
+
+export type decksCopyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type decksCopyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksCopyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type decksCopyResponseSuccess = (decksCopyResponse201) & {
+  headers: Headers;
+};
+export type decksCopyResponseError = (decksCopyResponse401 | decksCopyResponse403 | decksCopyResponse404) & {
+  headers: Headers;
+};
+
+export type decksCopyResponse = (decksCopyResponseSuccess | decksCopyResponseError)
+
+export const getDecksCopyUrl = (deck: number,) => {
+
+
+
+
+  return `/api/decks/${deck}/copy`
+}
+
+export const decksCopy = async (deck: number, options?: RequestInit): Promise<decksCopyResponse> => {
+
+  const res = await fetch(getDecksCopyUrl(deck),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksCopyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksCopyResponse
+}
+
+
 
 export type userShowResponse200 = {
   data: User

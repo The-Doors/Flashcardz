@@ -34,7 +34,7 @@ class CardDeckMigrationTest extends PostgresTestCase
     {
         $this->resetDatabase();
 
-        $this->artisan('migrate:rollback', ['--step' => 2, '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate:rollback', ['--step' => 3, '--force' => true])->assertExitCode(0);
 
         $this->assertFalse(Schema::hasTable('app.cards'));
         $this->assertFalse(Schema::hasTable('app.decks'));

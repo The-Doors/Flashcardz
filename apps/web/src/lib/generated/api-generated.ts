@@ -59,6 +59,45 @@ export interface LengthAwarePaginator {
   total: number;
 }
 
+export type Rating = typeof Rating[keyof typeof Rating];
+
+
+export const Rating = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+  NUMBER_3: 3,
+  NUMBER_4: 4,
+} as const;
+
+export type State = typeof State[keyof typeof State];
+
+
+export const State = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+  NUMBER_3: 3,
+} as const;
+
+export interface Review {
+  id: number;
+  user_id: string;
+  card_id: number;
+  rating: Rating;
+  review_datetime: string;
+  /** @nullable */
+  review_duration: number | null;
+  state: State;
+  /** @nullable */
+  step: number | null;
+  stability: number;
+  difficulty: number;
+  due: string;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+}
+
 export interface StoreCardRequest {
   /** @maxLength 10000 */
   content: string;
@@ -74,6 +113,35 @@ export interface StoreDeckRequest {
      */
   description?: string | null;
   is_public?: boolean;
+}
+
+export interface StoreReviewRequest {
+  /** @minimum 1 */
+  card_id: number;
+  rating: Rating;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  previous_review_id: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2147483647
+     * @nullable
+     */
+  review_duration?: number | null;
+  timezone?: string;
+  /** @minimum 1 */
+  deck_id?: number;
+  date?: string;
+  user_id?: string;
+  review_datetime?: string;
+  last_review?: string;
+  due?: string;
+  state?: string;
+  step?: string;
+  stability?: string;
+  difficulty?: string;
 }
 
 export interface UpdateCardRequest {
@@ -152,6 +220,15 @@ export type CardsIndex200 = {
   /** @nullable */
   to: number | null;
   total: string;
+};
+
+export type ReviewsIndexParams = {
+date?: string;
+timezone?: string;
+/**
+ * @minimum 1
+ */
+deck_id?: number;
 };
 
 export type ExampleOptionalAuth200 = {
@@ -910,6 +987,193 @@ export const decksCopy = async (deck: number, options?: RequestInit): Promise<de
 
   const data: decksCopyResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as decksCopyResponse
+}
+
+
+
+export type reviewsIndexResponse200 = {
+  data: unknown[]
+  status: 200
+}
+
+export type reviewsIndexResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type reviewsIndexResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type reviewsIndexResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type reviewsIndexResponseSuccess = (reviewsIndexResponse200) & {
+  headers: Headers;
+};
+export type reviewsIndexResponseError = (reviewsIndexResponse401 | reviewsIndexResponse403 | reviewsIndexResponse422) & {
+  headers: Headers;
+};
+
+export type reviewsIndexResponse = (reviewsIndexResponseSuccess | reviewsIndexResponseError)
+
+export const getReviewsIndexUrl = (params?: ReviewsIndexParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/reviews?${stringifiedParams}` : `/api/reviews`
+}
+
+export const reviewsIndex = async (params?: ReviewsIndexParams, options?: RequestInit): Promise<reviewsIndexResponse> => {
+
+  const res = await fetch(getReviewsIndexUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: reviewsIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as reviewsIndexResponse
+}
+
+
+
+export type reviewsStoreResponse201 = {
+  data: Review
+  status: 201
+}
+
+export type reviewsStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type reviewsStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type reviewsStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type reviewsStoreResponseSuccess = (reviewsStoreResponse201) & {
+  headers: Headers;
+};
+export type reviewsStoreResponseError = (reviewsStoreResponse401 | reviewsStoreResponse403 | reviewsStoreResponse422) & {
+  headers: Headers;
+};
+
+export type reviewsStoreResponse = (reviewsStoreResponseSuccess | reviewsStoreResponseError)
+
+export const getReviewsStoreUrl = () => {
+
+
+
+
+  return `/api/reviews`
+}
+
+export const reviewsStore = async (storeReviewRequest: StoreReviewRequest, options?: RequestInit): Promise<reviewsStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getReviewsStoreUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(storeReviewRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: reviewsStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as reviewsStoreResponse
+}
+
+
+
+export type reviewsUndoResponse204 = {
+  data: void
+  status: 204
+}
+
+export type reviewsUndoResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type reviewsUndoResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type reviewsUndoResponseSuccess = (reviewsUndoResponse204) & {
+  headers: Headers;
+};
+export type reviewsUndoResponseError = (reviewsUndoResponse401 | reviewsUndoResponse404) & {
+  headers: Headers;
+};
+
+export type reviewsUndoResponse = (reviewsUndoResponseSuccess | reviewsUndoResponseError)
+
+export const getReviewsUndoUrl = (review: number,) => {
+
+
+
+
+  return `/api/reviews/${review}/undo`
+}
+
+export const reviewsUndo = async (review: number, options?: RequestInit): Promise<reviewsUndoResponse> => {
+
+  const res = await fetch(getReviewsUndoUrl(review),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: reviewsUndoResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as reviewsUndoResponse
 }
 
 

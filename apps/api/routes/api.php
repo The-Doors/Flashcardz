@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DeckController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,8 @@ Route::middleware('optional-auth:api')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::apiResource('reviews', ReviewController::class)->only(['index', 'store']);
+    Route::post('reviews/{review}/undo', [ReviewController::class, 'undo'])->name('reviews.undo');
     Route::apiResource('decks', DeckController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('cards', CardController::class)->only(['store', 'update', 'destroy']);
     Route::post('decks/{deck}/copy', [DeckController::class, 'copy'])->name('decks.copy');

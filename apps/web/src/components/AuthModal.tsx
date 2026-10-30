@@ -1,225 +1,252 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { X, Eye, EyeOff } from "lucide-react";
+import {
+  Anchor,
+  Button,
+  Divider,
+  Modal,
+  PasswordInput,
+  SegmentedControl,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useState } from "react";
+import { FaGoogle } from "react-icons/fa";
+import { supabase } from "../lib/supabase";
 import type { AuthMode, SignInPayload, SignUpPayload } from "./types";
-import "./AuthModal.css";
 
-type AuthModalProps = {
+interface AuthModalProps {
   mode: AuthMode;
   onModeChange: (mode: AuthMode) => void;
   onClose: () => void;
-  /** Throw an Error (e.g. "Incorrect email or password") to show it in the form. */
   onSignIn?: (data: SignInPayload) => void | Promise<void>;
   onSignUp?: (data: SignUpPayload) => void | Promise<void>;
-};
+}
 
-type Errors = Partial<Record<"name" | "email" | "password" | "confirm", string>>;
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD = 8;
-
-export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSignUp }: AuthModalProps) {
-  const isSignUp = mode === "signup";
-  const uid = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  const [name, setName] = useState("");
+export function AuthModal({
+  mode,
+  onModeChange,
+  onClose,
+  onSignIn,
+  onSignUp,
+}: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  // Focus the first field whenever the modal opens or switches mode.
-  useEffect(() => {
-    dialogRef.current?.querySelector<HTMLElement>("input")?.focus();
-  }, [mode]);
+  function showError(title: string, message: string) {
+    notifications.show({
+      title,
+      message,
+      color: "red",
+      autoClose: 5000,
+    });
+  }
 
-  // Escape closes (unless a request is in flight).
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape" && !submitting) onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose, submitting]);
-
-  // Keep Tab focus inside the dialog.
-  const trapFocus = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab" || !dialogRef.current) return;
-    const items = dialogRef.current.querySelectorAll<HTMLElement>(
-      "button:not([disabled]), input:not([disabled])",
-    );
-    if (items.length === 0) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
+  function checkSupabaseConfig(): boolean {
+    if (!supabase) {
+      showError(
+        "Configuration Error",
+        "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
+      );
+      return false;
     }
-  };
+    return true;
+  }
 
-  const switchMode = () => {
-    setErrors({});
-    setFormError(null);
-    setPassword("");
-    setConfirm("");
-    setShowPassword(false);
-    onModeChange(isSignUp ? "signin" : "signup");
-  };
-
-  const validate = (): Errors => {
-    const next: Errors = {};
-    if (isSignUp && !name.trim()) next.name = "Enter your name.";
-    if (!EMAIL_RE.test(email.trim())) next.email = "Enter a valid email address.";
-    if (!password) next.password = "Enter your password.";
-    else if (isSignUp && password.length < MIN_PASSWORD)
-      next.password = `Use at least ${MIN_PASSWORD} characters.`;
-    if (isSignUp && confirm !== password) next.confirm = "Passwords don’t match.";
-    return next;
-  };
-
-  const submit = async (e: FormEvent<HTMLFormElement>) => {
+  async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (submitting) return;
+    setInfoMessage(null);
+    setLoading(true);
 
-    const found = validate();
-    setErrors(found);
-    if (Object.keys(found).length > 0) return;
-
-    setFormError(null);
-    setSubmitting(true);
     try {
-      if (isSignUp) await onSignUp?.({ name: name.trim(), email: email.trim(), password });
-      else await onSignIn?.({ email: email.trim(), password });
-      onClose();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-      setSubmitting(false);
-    }
-  };
+      // If AppLayout provided an onSignIn handler, use it
+      if (onSignIn) {
+        await onSignIn({ email, password });
+      } else {
+        // Fallback directly to Supabase client
+        if (!checkSupabaseConfig()) return;
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      }
 
-  const id = (field: string) => `${uid}-${field}`;
-  const fieldProps = (field: keyof Errors) => ({
-    id: id(field),
-    "aria-invalid": errors[field] ? true : undefined,
-    "aria-describedby": errors[field] ? id(`${field}-err`) : undefined,
-  });
-  const fieldError = (field: keyof Errors) =>
-    errors[field] && (
-      <span id={id(`${field}-err`)} className="am-error">
-        {errors[field]}
-      </span>
-    );
+      notifications.show({
+        title: "Welcome back!",
+        message: "You have signed in successfully.",
+        color: "green",
+      });
+      onClose();
+    } catch (err: any) {
+      showError("Sign-in failed", err.message || "Failed to sign in.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setInfoMessage(null);
+
+    if (password !== confirmPassword) {
+      showError("Sign-up failed", "Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // If AppLayout provided an onSignUp handler, use it
+      if (onSignUp) {
+        await onSignUp({ email, password, confirmPassword });
+        notifications.show({
+          title: "Account created!",
+          message: "Your account has been set up.",
+          color: "green",
+        });
+        onClose();
+      } else {
+        // Fallback directly to Supabase client
+        if (!checkSupabaseConfig()) return;
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth-callback`,
+          },
+        });
+        if (error) throw error;
+
+        if (data.session) {
+          notifications.show({
+            title: "Account created!",
+            message: "You are now logged in.",
+            color: "green",
+          });
+          onClose();
+          return;
+        } else {
+          setInfoMessage("Check your email to confirm your account before logging in.");
+        }
+      }
+    } catch (err: any) {
+      showError("Account creation failed", err.message || "Failed to create account.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleAuth() {
+    if (!checkSupabaseConfig()) return;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth-callback`,
+      },
+    });
+
+    if (error) showError("Google authentication failed", error.message);
+  }
 
   return (
-    <div className="am-overlay" onMouseDown={() => !submitting && onClose()}>
-      <div
-        ref={dialogRef}
-        className="am-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={id("title")}
-        onMouseDown={(e) => e.stopPropagation()}
-        onKeyDown={trapFocus}
-      >
-        <button className="am-close" onClick={onClose} aria-label="Close" disabled={submitting}>
-          <X size={18} aria-hidden="true" />
-        </button>
+    <Modal
+      opened={true}
+      onClose={onClose}
+      centered
+      radius="md"
+      padding="xl"
+      title={
+        <Title order={3}>
+          {mode === "signin" ? "Welcome Back" : "Create Account"}
+        </Title>
+      }
+    >
+      <Stack gap="md">
+        <SegmentedControl
+          fullWidth
+          value={mode}
+          onChange={(val) => {
+            onModeChange(val as AuthMode);
+            setInfoMessage(null);
+          }}
+          data={[
+            { label: "Sign In", value: "signin" },
+            { label: "Sign Up", value: "signup" },
+          ]}
+        />
 
-        <h2 id={id("title")} className="am-title">
-          {isSignUp ? "Create your account" : "Welcome back"}
-        </h2>
-        <p className="am-sub">
-          {isSignUp ? "Sign up to save your sets and track your progress." : "Sign in to pick up where you left off."}
-        </p>
-
-        <form className="am-form" onSubmit={submit} noValidate>
-          {isSignUp && (
-            <div className="am-field">
-              <label htmlFor={id("name")}>Name</label>
-              <input
-                {...fieldProps("name")}
-                type="text"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {fieldError("name")}
-            </div>
-          )}
-
-          <div className="am-field">
-            <label htmlFor={id("email")}>Email</label>
-            <input
-              {...fieldProps("email")}
+        <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp}>
+          <Stack gap="sm">
+            <TextInput
+              label="Email"
               type="email"
-              autoComplete="email"
+              placeholder="you@example.com"
+              required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.currentTarget.value)}
             />
-            {fieldError("email")}
-          </div>
 
-          <div className="am-field">
-            <label htmlFor={id("password")}>Password</label>
-            <div className="am-password">
-              <input
-                {...fieldProps("password")}
-                type={showPassword ? "text" : "password"}
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+            <PasswordInput
+              label="Password"
+              placeholder="Your password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+            />
+
+            {mode === "signup" && (
+              <PasswordInput
+                label="Confirm Password"
+                placeholder="Re-enter password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.currentTarget.value)}
               />
-              <button
-                type="button"
-                className="am-eye"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                aria-pressed={showPassword}
-              >
-                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-              </button>
-            </div>
-            {fieldError("password")}
-          </div>
+            )}
 
-          {isSignUp && (
-            <div className="am-field">
-              <label htmlFor={id("confirm")}>Confirm password</label>
-              <input
-                {...fieldProps("confirm")}
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-              />
-              {fieldError("confirm")}
-            </div>
-          )}
-
-          {formError && (
-            <p className="am-form-error" role="alert">
-              {formError}
-            </p>
-          )}
-
-          <button type="submit" className="am-submit" disabled={submitting}>
-            {submitting ? "Please wait…" : isSignUp ? "Sign up" : "Sign in"}
-          </button>
+            <Button type="submit" fullWidth loading={loading} mt="xs">
+              {mode === "signin" ? "Sign In" : "Create Account"}
+            </Button>
+          </Stack>
         </form>
 
-        <p className="am-switch">
-          {isSignUp ? "Already have an account?" : "New to FlashCardz?"}{" "}
-          <button type="button" className="am-link" onClick={switchMode} disabled={submitting}>
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
-      </div>
-    </div>
+        {infoMessage && (
+          <Text c="teal" size="sm" ta="center" fw={500}>
+            {infoMessage}
+          </Text>
+        )}
+
+        <Divider label="Or continue with" labelPosition="center" />
+
+        <Button
+          variant="default"
+          fullWidth
+          onClick={handleGoogleAuth}
+          leftSection={<FaGoogle />}
+        >
+          Continue with Google
+        </Button>
+
+        <Text c="dimmed" size="xs" ta="center" mt="xs">
+          By continuing, you agree to our{" "}
+          <Anchor href="/terms" size="xs">
+            Terms of Service
+          </Anchor>{" "}
+          and{" "}
+          <Anchor href="/privacy" size="xs">
+            Privacy Policy
+          </Anchor>
+          .
+        </Text>
+      </Stack>
+    </Modal>
   );
 }
+
+export default AuthModal;

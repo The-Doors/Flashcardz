@@ -13,15 +13,24 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import { FaGoogle } from "react-icons/fa";
-import { supabase } from "../lib/supabase";
+import axios from "axios";
 import type { AuthMode, SignInPayload, SignUpPayload } from "./types";
+
+// Configure Axios for Laravel Sanctum
+// Note: In a larger app, you should move this to a dedicated api.ts file
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common["Accept"] = "application/json";
+
+// Optional: Extend SignUpPayload locally if your types.ts doesn't include 'name'
+type ExtendedSignUpPayload = SignUpPayload & { name?: string };
 
 interface AuthModalProps {
   mode: AuthMode;
   onModeChange: (mode: AuthMode) => void;
   onClose: () => void;
   onSignIn?: (data: SignInPayload) => void | Promise<void>;
-  onSignUp?: (data: SignUpPayload) => void | Promise<void>;
+  onSignUp?: (data: ExtendedSignUpPayload) => void | Promise<void>;
 }
 
 export function AuthModal({
@@ -31,6 +40,7 @@ export function AuthModal({
   onSignIn,
   onSignUp,
 }: AuthModalProps) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -46,34 +56,19 @@ export function AuthModal({
     });
   }
 
-  function checkSupabaseConfig(): boolean {
-    if (!supabase) {
-      showError(
-        "Configuration Error",
-        "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
-      );
-      return false;
-    }
-    return true;
-  }
-
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setInfoMessage(null);
     setLoading(true);
 
     try {
-      // If AppLayout provided an onSignIn handler, use it
       if (onSignIn) {
         await onSignIn({ email, password });
       } else {
-        // Fallback directly to Supabase client
-        if (!checkSupabaseConfig()) return;
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        // Initialize CSRF protection for Laravel Sanctum
+        await axios.get("/sanctum/csrf-cookie");
+        // Hit Laravel's default login endpoint
+        await axios.post("/login", { email, password });
       }
 
       notifications.show({
@@ -81,9 +76,15 @@ export function AuthModal({
         message: "You have signed in successfully.",
         color: "green",
       });
+      
       onClose();
+      // Optional: Force reload to refetch the authenticated user state in AppLayout
+      window.location.reload();
     } catch (err: any) {
-      showError("Sign-in failed", err.message || "Failed to sign in.");
+      showError(
+        "Sign-in failed",
+        err.response?.data?.message || err.message || "Failed to sign in."
+      );
     } finally {
       setLoading(false);
     }
@@ -101,9 +102,8 @@ export function AuthModal({
     setLoading(true);
 
     try {
-      // If AppLayout provided an onSignUp handler, use it
       if (onSignUp) {
-        await onSignUp({ email, password, confirmPassword });
+        await onSignUp({ email, password, confirmPassword, name });
         notifications.show({
           title: "Account created!",
           message: "Your account has been set up.",
@@ -111,47 +111,37 @@ export function AuthModal({
         });
         onClose();
       } else {
-        // Fallback directly to Supabase client
-        if (!checkSupabaseConfig()) return;
-        const { data, error } = await supabase.auth.signUp({
+        // Initialize CSRF protection
+        await axios.get("/sanctum/csrf-cookie");
+        // Hit Laravel's default register endpoint
+        await axios.post("/register", {
+          name,
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth-callback`,
-          },
+          password_confirmation: confirmPassword,
         });
-        if (error) throw error;
 
-        if (data.session) {
-          notifications.show({
-            title: "Account created!",
-            message: "You are now logged in.",
-            color: "green",
-          });
-          onClose();
-          return;
-        } else {
-          setInfoMessage("Check your email to confirm your account before logging in.");
-        }
+        notifications.show({
+          title: "Account created!",
+          message: "You are now logged in.",
+          color: "green",
+        });
+        onClose();
+        window.location.reload();
       }
     } catch (err: any) {
-      showError("Account creation failed", err.message || "Failed to create account.");
+      showError(
+        "Account creation failed",
+        err.response?.data?.message || err.message || "Failed to create account."
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleGoogleAuth() {
-    if (!checkSupabaseConfig()) return;
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth-callback`,
-      },
-    });
-
-    if (error) showError("Google authentication failed", error.message);
+  function handleGoogleAuth() {
+    // Standard Laravel Socialite redirect
+    window.location.href = `${axios.defaults.baseURL}/auth/google/redirect`;
   }
 
   return (
@@ -183,6 +173,16 @@ export function AuthModal({
 
         <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp}>
           <Stack gap="sm">
+            {mode === "signup" && (
+              <TextInput
+                label="Name"
+                placeholder="Your full name"
+                required
+                value={name}
+                onChange={(e) => setName(e.currentTarget.value)}
+              />
+            )}
+
             <TextInput
               label="Email"
               type="email"

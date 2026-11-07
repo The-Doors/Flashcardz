@@ -2,6 +2,10 @@
 
 return [
 
+    'zenrows' => [
+        'api_key' => env('ZENROWS_API_KEY'),
+    ],
+
     'supabase' => [
         'url' => env('SUPABASE_URL'),
         'jwks_url' => env('SUPABASE_JWKS_URL'),

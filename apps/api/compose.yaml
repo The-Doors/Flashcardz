@@ -23,6 +23,22 @@ services:
             - '.:/var/www/html'
         networks:
             - sail
+    worker:
+        image: 'sail-8.5/app'
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            SUPERVISOR_PHP_COMMAND: '/usr/bin/php /var/www/html/artisan queue:work --sleep=3 --tries=1 --timeout=900 --no-interaction'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - laravel.test
+        stop_grace_period: 16m
+        restart: unless-stopped
 networks:
     sail:
         driver: bridge

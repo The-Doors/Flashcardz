@@ -38,7 +38,15 @@ services:
       - .env
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=1", "--timeout=900", "--no-interaction"]
     healthcheck:
-      disable: true
+      test:
+        - CMD
+        - php
+        - -r
+        - 'exit(array_any(glob("/proc/[0-9]*/cmdline"), fn($$path) => str_starts_with((string) @file_get_contents($$path), "php\0artisan\0queue:work\0")) ? 0 : 1);'
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

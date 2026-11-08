@@ -37,6 +37,43 @@ export interface Deck {
   updated_at: string | null;
 }
 
+export interface ImportQuizletRequest {
+  source: string;
+}
+
+/**
+ * @nullable
+ */
+export type JobStatusProgress = {
+  stage: string;
+  fetched_cards?: number;
+  /** @nullable */
+  total_cards?: number | null;
+} | null;
+
+export interface JobStatus {
+  id: number;
+  user_id: string;
+  type: string;
+  status: string;
+  /** @nullable */
+  progress: JobStatusProgress;
+  /** @nullable */
+  error_code: string | null;
+  /** @nullable */
+  error_message: string | null;
+  /** @nullable */
+  deck_id: number | null;
+  /** @nullable */
+  started_at: string | null;
+  /** @nullable */
+  finished_at: string | null;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+}
+
 export type LengthAwarePaginatorLinks = {[key: string]: unknown};
 
 export interface LengthAwarePaginator {
@@ -987,6 +1024,134 @@ export const decksCopy = async (deck: number, options?: RequestInit): Promise<de
 
   const data: decksCopyResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as decksCopyResponse
+}
+
+
+
+export type jobsShowResponse200 = {
+  data: JobStatus
+  status: 200
+}
+
+export type jobsShowResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type jobsShowResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type jobsShowResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type jobsShowResponseSuccess = (jobsShowResponse200) & {
+  headers: Headers;
+};
+export type jobsShowResponseError = (jobsShowResponse401 | jobsShowResponse403 | jobsShowResponse404) & {
+  headers: Headers;
+};
+
+export type jobsShowResponse = (jobsShowResponseSuccess | jobsShowResponseError)
+
+export const getJobsShowUrl = (job: number,) => {
+
+
+
+
+  return `/api/jobs/${job}`
+}
+
+export const jobsShow = async (job: number, options?: RequestInit): Promise<jobsShowResponse> => {
+
+  const res = await fetch(getJobsShowUrl(job),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: jobsShowResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as jobsShowResponse
+}
+
+
+
+export type quizletImportResponse202 = {
+  data: JobStatus
+  status: 202
+}
+
+export type quizletImportResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type quizletImportResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type quizletImportResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type quizletImportResponseSuccess = (quizletImportResponse202) & {
+  headers: Headers;
+};
+export type quizletImportResponseError = (quizletImportResponse401 | quizletImportResponse403 | quizletImportResponse422) & {
+  headers: Headers;
+};
+
+export type quizletImportResponse = (quizletImportResponseSuccess | quizletImportResponseError)
+
+export const getQuizletImportUrl = () => {
+
+
+
+
+  return `/api/quizlet/import`
+}
+
+export const quizletImport = async (importQuizletRequest: ImportQuizletRequest, options?: RequestInit): Promise<quizletImportResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getQuizletImportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(importQuizletRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: quizletImportResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as quizletImportResponse
 }
 
 

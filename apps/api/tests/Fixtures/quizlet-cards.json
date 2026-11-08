@@ -1,0 +1,59 @@
+{
+  "responses": [
+    {
+      "models": {
+        "studiableItem": [
+          {
+            "id": 1,
+            "cardSides": [
+              {
+                "label": "word",
+                "media": [
+                  {
+                    "type": 1,
+                    "plainText": "Cell"
+                  }
+                ]
+              },
+              {
+                "label": "definition",
+                "media": [
+                  {
+                    "type": 1,
+                    "plainText": "Basic unit of life"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "cardSides": [
+              {
+                "label": "word",
+                "media": [
+                  {
+                    "type": 1,
+                    "plainText": "Nucleus"
+                  }
+                ]
+              },
+              {
+                "label": "definition",
+                "media": [
+                  {
+                    "type": 1,
+                    "plainText": "Contains DNA"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "paging": {
+        "total": 2
+      }
+    }
+  ]
+}

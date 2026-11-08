@@ -32,5 +32,20 @@ services:
     stop_grace_period: 30s
     restart: unless-stopped
 
+  worker:
+    image: ghcr.io/${GHCR_OWNER:-the-doors}/flashcardz-backend:${IMAGE_TAG:-latest}
+    env_file:
+      - .env
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=1", "--timeout=900", "--no-interaction"]
+    healthcheck:
+      disable: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - api-storage:/app/storage
+    init: true
+    stop_grace_period: 16m
+    restart: unless-stopped
+
 volumes:
   api-storage:

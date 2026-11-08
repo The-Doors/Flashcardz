@@ -22,7 +22,7 @@ class ReviewMigrationTest extends PostgresTestCase
 
     public function test_review_migration_can_be_rolled_back_and_reapplied(): void
     {
-        $this->artisan('migrate:rollback', ['--step' => 1, '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate:rollback', ['--step' => DB::table('migrations')->where('migration', '>=', '2026_10_29_001712_create_reviews_table')->count(), '--force' => true])->assertExitCode(0);
 
         $this->assertFalse(Schema::hasTable('app.reviews'));
         $this->assertTrue(Schema::hasTable('app.cards'));

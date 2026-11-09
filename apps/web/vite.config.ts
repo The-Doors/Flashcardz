@@ -15,7 +15,15 @@ const config = defineConfig(({ command }) => ({
 		nitro({
 			routeRules:
 				command === "serve"
-					? { "/api/**": { proxy: "http://127.0.0.1:8000/api/**" } }
+					? {
+							"/api/**": {
+								proxy: {
+									to: "http://127.0.0.1:8000/api/**",
+									// Node's fetch can't decode the zstd that browsers ask for.
+									filterHeaders: ["accept-encoding"],
+								},
+							},
+						}
 					: {},
 			rollupConfig: {
 				external: [/^@sentry\//],

@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import StudyHeatmap from "./StudyHeatmap";
 import AuthModal from "./AuthModal";
+import { useQuery } from "@tanstack/react-query";
+import { loadStudyActivity, STUDY_ACTIVITY_QUERY_KEY } from "../lib/api-lib";
+import { useAuth } from "../lib/auth";
 import type {
   ActivityData,
   AuthMode,
@@ -257,13 +260,20 @@ export default function AppLayout({
   active = "community",
   onNavigate,
   onSearch,
-  user,
+  user: userOverride,
   onLogout,
   onSignIn,
   onSignUp,
   activity,
 }: AppLayoutProps) {
   const routerNavigate = useNavigate();
+  const auth = useAuth();
+  const user = userOverride ?? auth.user;
+  const { data: studyActivity } = useQuery({
+    queryKey: [STUDY_ACTIVITY_QUERY_KEY, auth.userId],
+    queryFn: loadStudyActivity,
+    enabled: !!auth.userId && !auth.needsUsername,
+  });
 
   const [theme, setTheme] = useState<Theme>(() => {
     try {
@@ -301,10 +311,10 @@ export default function AppLayout({
         appName={appName}
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        onSearch={onSearch}
+        onSearch={onSearch ?? ((q) => void routerNavigate({ to: "/search", search: { q } }))}
         onNavigate={handleNavigate}
         user={user}
-        onLogout={onLogout}
+        onLogout={onLogout ?? auth.signOut}
         onOpenAuth={handleOpenAuth}
       />
       <div className="fc-body">
@@ -313,18 +323,28 @@ export default function AppLayout({
           onNavigate={handleNavigate}
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
-          activity={activity}
+          activity={activity ?? (auth.userId ? studyActivity : undefined)}
         />
         <main className="fc-main">{children}</main>
       </div>
 
-      {authMode && !user && (
+      {auth.needsUsername && (
+        <AuthModal
+          key="username"
+          mode="username"
+          onModeChange={setAuthMode}
+          onClose={auth.signOut}
+          onChooseUsername={auth.chooseUsername}
+        />
+      )}
+
+      {authMode && !user && !auth.needsUsername && (
         <AuthModal
           mode={authMode}
           onModeChange={setAuthMode}
           onClose={() => setAuthMode(null)}
-          onSignIn={onSignIn}
-          onSignUp={onSignUp}
+          onSignIn={onSignIn ?? auth.signIn}
+          onSignUp={onSignUp ?? auth.signUp}
         />
       )}
     </div>

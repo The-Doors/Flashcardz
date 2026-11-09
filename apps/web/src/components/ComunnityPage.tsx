@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
   SlidersHorizontal,
   TrendingUp,
@@ -11,17 +13,18 @@ import {
 } from "lucide-react";
 import AppLayout from "./AppLayout";
 import { cardLabel } from "./formatters";
+import { loadCommunitySets } from "../lib/api-lib";
 import type {
   ActivityData,
   CommunitySet,
   CommunitySort,
   NavId,
-  SetCategory,
   SignInPayload,
   SignUpPayload,
   UserInfo,
 } from "./types";
 import "./CommunityPage.css";
+import "./SetPage.css";
 
 type CommunityPageProps = {
   appName?: string;
@@ -31,20 +34,9 @@ type CommunityPageProps = {
   onSignIn?: (data: SignInPayload) => void | Promise<void>;
   onSignUp?: (data: SignUpPayload) => void | Promise<void>;
   activity?: ActivityData;
-  sets?: CommunitySet[];
   onOpenSet?: (set: CommunitySet) => void;
   onNavigate?: (id: NavId) => void;
 };
-
-const CATEGORIES: SetCategory[] = [
-  "All",
-  "Languages",
-  "Science",
-  "Tech & IT",
-  "Humanities",
-  "Math",
-  "Other",
-];
 
 const SORT_OPTIONS: { id: CommunitySort; label: string; icon: typeof TrendingUp }[] = [
   { id: "popular", label: "Most popular", icon: TrendingUp },
@@ -55,17 +47,28 @@ const SORT_OPTIONS: { id: CommunitySort; label: string; icon: typeof TrendingUp 
 const EMPTY_SETS: CommunitySet[] = [];
 
 export default function CommunityPage({
-  sets = EMPTY_SETS,
   onOpenSet,
   onNavigate,
   ...layoutProps
 }: CommunityPageProps) {
-  const [selectedCategory, setSelectedCategory] = useState<SetCategory>("All");
+  const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<CommunitySort>("popular");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // Close the filter popover on outside click or Escape
+  const community = useInfiniteQuery({
+    queryKey: ["community-sets", sortBy],
+    queryFn: ({ pageParam }) => loadCommunitySets(sortBy, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.lastPage ? last.page + 1 : undefined),
+  });
+  const sets = community.data?.pages.flatMap((page) => page.sets) ?? EMPTY_SETS;
+
+  const openSet =
+    onOpenSet ??
+    ((set: CommunitySet) => void navigate({ to: "/sets/$setId", params: { setId: String(set.id) } }));
+
+  // Close the sort popover on outside click or Escape
   useEffect(() => {
     if (!filterOpen) return;
     const onClick = (e: globalThis.MouseEvent) => {
@@ -86,29 +89,13 @@ export default function CommunityPage({
     };
   }, [filterOpen]);
 
-  const filteredSets = useMemo(() => {
-    const byCategory =
-      selectedCategory === "All"
-        ? sets
-        : sets.filter((s) => s.category === selectedCategory);
-
-    return [...byCategory].sort((a, b) => {
-      if (sortBy === "popular") return b.studyCount - a.studyCount;
-      if (sortBy === "cards") return b.cardCount - a.cardCount;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-  }, [sets, selectedCategory, sortBy]);
-
   const currentSortLabel =
     SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Most popular";
-
-  const activeFilterCount =
-    (selectedCategory !== "All" ? 1 : 0) + (sortBy !== "popular" ? 1 : 0);
 
   return (
     <AppLayout active="community" onNavigate={onNavigate} {...layoutProps}>
       <div className="cp-page">
-        {/* Page Header + Filter Button */}
+        {/* Page Header + Sort Button */}
         <div className="cp-header">
           <div>
             <h1 className="cp-title">Community Sets</h1>
@@ -126,18 +113,12 @@ export default function CommunityPage({
               aria-expanded={filterOpen}
             >
               <SlidersHorizontal size={16} aria-hidden="true" />
-              <span>Filter & Sort</span>
-              <span className="cp-filter-summary">
-                {currentSortLabel}
-                {selectedCategory !== "All" ? ` · ${selectedCategory}` : ""}
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="cp-filter-badge">{activeFilterCount}</span>
-              )}
+              <span>Sort</span>
+              <span className="cp-filter-summary">{currentSortLabel}</span>
             </button>
 
             {filterOpen && (
-              <div className="cp-filter-menu" role="dialog" aria-label="Filter and sort sets">
+              <div className="cp-filter-menu" role="dialog" aria-label="Sort sets">
                 <div className="cp-filter-group">
                   <span className="cp-filter-label">Sort by</span>
                   <div className="cp-filter-options">
@@ -155,95 +136,65 @@ export default function CommunityPage({
                     ))}
                   </div>
                 </div>
-
-                <hr className="cp-divider" />
-
-                <div className="cp-filter-group">
-                  <span className="cp-filter-label">Type of set</span>
-                  <div className="cp-type-grid">
-                    {CATEGORIES.map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        className={`cp-type-chip ${
-                          selectedCategory === category ? "selected" : ""
-                        }`}
-                        onClick={() => setSelectedCategory(category)}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    className="cp-reset-btn"
-                    onClick={() => {
-                      setSelectedCategory("All");
-                      setSortBy("popular");
-                    }}
-                  >
-                    Reset to default
-                  </button>
-                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Quick Category Bar */}
-        <div className="cp-categories" role="tablist" aria-label="Set categories">
-          {CATEGORIES.map((category) => (
-            <button
-              key={category}
-              role="tab"
-              aria-selected={selectedCategory === category}
-              className={`cp-category-pill ${
-                selectedCategory === category ? "active" : ""
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+        {community.isPending ? (
+          <p className="sp-message">Loading…</p>
+        ) : community.isError ? (
+          <p className="sp-message" role="alert">Could not load community sets. Refresh to try again.</p>
+        ) : sets.length > 0 ? (
+          <>
+            <div className="cp-grid">
+              {sets.map((set) => (
+                <button
+                  key={set.id}
+                  className="cp-card"
+                  onClick={() => openSet(set)}
+                >
+                  <div className="cp-card-top">
+                    <span
+                      className="cp-studies"
+                      title={`${set.studyCount} ${set.studyCount === 1 ? "person has" : "people have"} studied this`}
+                    >
+                      <Users size={13} aria-hidden="true" />
+                      {set.studyCount.toLocaleString()}
+                    </span>
+                  </div>
 
-        {/* Grid of Sets or Empty Placeholders */}
-        {filteredSets.length > 0 ? (
-          <div className="cp-grid">
-            {filteredSets.map((set) => (
-              <button
-                key={set.id}
-                className="cp-card"
-                onClick={() => onOpenSet?.(set)}
-              >
-                <div className="cp-card-top">
-                  <span className="cp-badge">{set.category}</span>
-                  <span className="cp-studies" title={`${set.studyCount} learners studied this`}>
-                    <Users size={13} aria-hidden="true" />
-                    {set.studyCount.toLocaleString()}
-                  </span>
-                </div>
+                  <span className="cp-card-name">{set.name}</span>
+                  {set.description && (
+                    <span className="cp-card-desc">{set.description}</span>
+                  )}
 
-                <span className="cp-card-name">{set.name}</span>
-                {set.description && (
-                  <span className="cp-card-desc">{set.description}</span>
-                )}
+                  <div className="cp-card-foot">
+                    <span className="cp-author">
+                      <User size={13} aria-hidden="true" />
+                      {set.author}
+                    </span>
+                    <span className="cp-cards-count">{cardLabel(set.cardCount)}</span>
+                  </div>
 
-                <div className="cp-card-foot">
-                  <span className="cp-author">
-                    <User size={13} aria-hidden="true" />
-                    {set.author}
-                  </span>
-                  <span className="cp-cards-count">{cardLabel(set.cardCount)}</span>
-                </div>
+                  <ChevronRight size={18} className="cp-chevron" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
 
-                <ChevronRight size={18} className="cp-chevron" aria-hidden="true" />
-              </button>
-            ))}
-          </div>
+            {community.hasNextPage && (
+              <div className="cp-load-more">
+                <button
+                  type="button"
+                  className="sp-btn"
+                  disabled={community.isFetchingNextPage}
+                  onClick={() => void community.fetchNextPage()}
+                >
+                  {community.isFetchingNextPage ? "Loading…" : "Load more"}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="cp-grid">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -252,11 +203,7 @@ export default function CommunityPage({
                   <div className="cp-empty-msg">
                     <Layers size={22} aria-hidden="true" />
                     <strong>No community sets found</strong>
-                    <span>
-                      {selectedCategory !== "All"
-                        ? `No sets in "${selectedCategory}" yet.`
-                        : "Community flashcard sets will appear here."}
-                    </span>
+                    <span>Community flashcard sets will appear here.</span>
                   </div>
                 )}
               </div>

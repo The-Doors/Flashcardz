@@ -248,18 +248,14 @@
 .cp-card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
 }
 
-.cp-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 600;
+.cp-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
 }
 
 .cp-studies {

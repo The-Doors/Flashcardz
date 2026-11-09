@@ -39,6 +39,66 @@ class ReviewControllerTest extends PostgresTestCase
         return [['GET', '/api/reviews'], ['POST', '/api/reviews'], ['POST', '/api/reviews/1/undo']];
     }
 
+    public function test_activity_requires_authentication(): void
+    {
+        $this->getJson('/api/reviews/activity')->assertUnauthorized();
+    }
+
+    public function test_activity_counts_different_cards_per_day(): void
+    {
+        $owner = $this->createUser();
+        $deck = Deck::factory()->for($owner)->create();
+        $repeated = Card::factory()->for($deck)->create();
+        $other = Card::factory()->for($deck)->create();
+        Review::factory()->for($repeated)->create(['review_datetime' => '2026-10-27 09:00:00 UTC']);
+        Review::factory()->for($repeated)->create(['review_datetime' => '2026-10-28 09:00:00 UTC']);
+        Review::factory()->for($repeated)->create(['review_datetime' => '2026-10-28 09:10:00 UTC']);
+        Review::factory()->for($other)->create(['review_datetime' => '2026-10-28 09:20:00 UTC']);
+
+        $this->actingAs($owner)->getJson('/api/reviews/activity')->assertOk()->assertExactJson(['data' => [
+            ['date' => '2026-10-27', 'cards' => 1],
+            ['date' => '2026-10-28', 'cards' => 2],
+        ]]);
+    }
+
+    public function test_activity_groups_days_in_the_requested_timezone(): void
+    {
+        $owner = $this->createUser();
+        $card = Card::factory()->for(Deck::factory()->for($owner))->create();
+        Review::factory()->for($card)->create(['review_datetime' => '2026-10-28 02:00:00 UTC']);
+        $this->actingAs($owner);
+
+        $this->getJson('/api/reviews/activity')->assertOk()->assertJsonPath('data.0.date', '2026-10-28');
+        $this->getJson('/api/reviews/activity?timezone=America%2FChicago')->assertOk()->assertJsonPath('data.0.date', '2026-10-27');
+    }
+
+    public function test_activity_excludes_other_users_and_undone_reviews(): void
+    {
+        $owner = $this->createUser();
+        Review::factory()->for(Card::factory()->for(Deck::factory()->for($this->createUser())))->create();
+        $undone = Review::factory()->for(Card::factory()->for(Deck::factory()->for($owner)))->create();
+        $undone->delete();
+
+        $this->actingAs($owner)->getJson('/api/reviews/activity')->assertOk()->assertExactJson(['data' => []]);
+    }
+
+    public function test_activity_keeps_history_for_deleted_sets(): void
+    {
+        $owner = $this->createUser();
+        $deck = Deck::factory()->for($owner)->create();
+        Review::factory()->for(Card::factory()->for($deck))->create(['review_datetime' => '2026-10-27 09:00:00 UTC']);
+        $this->actingAs($owner);
+
+        $this->deleteJson("/api/decks/{$deck->id}")->assertNoContent();
+
+        $this->getJson('/api/reviews/activity')->assertOk()->assertJsonPath('data.0.cards', 1);
+    }
+
+    public function test_activity_rejects_an_invalid_timezone(): void
+    {
+        $this->actingAs($this->createUser())->getJson('/api/reviews/activity?timezone=invalid')->assertUnprocessable()->assertJsonValidationErrors(['timezone']);
+    }
+
     public function test_lists_owned_due_and_new_cards_with_readiness_and_queue_priority(): void
     {
         $owner = $this->createUser();

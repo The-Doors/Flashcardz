@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Flame } from "lucide-react";
+import { cardLabel } from "./formatters";
 import type { ActivityData } from "./types";
 import "./StudyHeatmap.css";
 
@@ -161,7 +162,7 @@ export default function StudyHeatmap({ activity = EMPTY_ACTIVITY }: StudyHeatmap
       </div>
 
       <div className="fc-heatmap-foot">
-        <span>{total} cards this month</span>
+        <span>{cardLabel(total)} this month</span>
         <span className="fc-legend" aria-hidden="true">
           Less
           {[0, 1, 2, 3, 4].map((l) => (

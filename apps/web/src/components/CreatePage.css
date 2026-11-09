@@ -83,6 +83,30 @@
   font-weight: 600;
 }
 
+.cr-private {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cr-private input {
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.cr-private span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-private small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .cr-field {
   display: flex;
   flex-direction: column;

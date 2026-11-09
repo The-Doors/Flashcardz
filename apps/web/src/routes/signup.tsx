@@ -61,6 +61,8 @@ function SignupPage() {
 			showError(signUpError.message);
 		} else if (!data.session) {
 			setMessage("Check your email to confirm your account.");
+		} else {
+			window.location.assign("/auth-callback");
 		}
 	}
 

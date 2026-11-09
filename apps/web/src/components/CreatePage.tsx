@@ -1,19 +1,30 @@
-import { useState, useRef, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Plus, Trash2, ArrowLeft, Save, Bold, Italic, Code, List } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import AppLayout from "./AppLayout";
+import {
+  isCardTooLong,
+  loadSet,
+  type NewFlashcardSet,
+  saveSet,
+  type SetDetails,
+  updateSet,
+} from "../lib/api-lib";
+import { useAuth } from "../lib/auth";
 import type {
   ActivityData,
   NavId,
-  SetCategory,
   SignInPayload,
   SignUpPayload,
   UserInfo,
 } from "./types";
 import "./CreatePage.css";
+import "./SetPage.css";
 
 type FlashcardInput = {
   id: string;
+  /** Set when this card already exists on the server. */
+  serverId?: number;
   front: string;
   back: string;
 };
@@ -26,36 +37,29 @@ type CreatePageProps = {
   onSignIn?: (data: SignInPayload) => void | Promise<void>;
   onSignUp?: (data: SignUpPayload) => void | Promise<void>;
   activity?: ActivityData;
-  onSaveSet?: (data: {
-    name: string;
-    description: string;
-    category: SetCategory;
-    cards: { front: string; back: string }[];
-  }) => void | Promise<void>;
+  onSaveSet?: (data: NewFlashcardSet) => void | Promise<void>;
   onNavigate?: (id: NavId) => void;
+  /** When set, the form edits this existing set instead of creating one. */
+  setId?: number;
 };
-
-const CATEGORIES: Exclude<SetCategory, "All">[] = [
-  "Languages",
-  "Science",
-  "Tech & IT",
-  "Humanities",
-  "Math",
-  "Other",
-];
 
 const genId = () => Math.random().toString(36.25).substring(2, 9);
 
 export default function CreatePage({
-  onSaveSet,
+  onSaveSet = saveSet,
   onNavigate,
+  setId,
   ...layoutProps
 }: CreatePageProps) {
   const routerNavigate = useNavigate();
+  const { userId } = useAuth();
+  const isEditing = setId !== undefined;
+  const [original, setOriginal] = useState<SetDetails | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<Exclude<SetCategory, "All">>("Tech & IT");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [cards, setCards] = useState<FlashcardInput[]>([
     { id: genId(), front: "", back: "" },
     { id: genId(), front: "", back: "" },
@@ -65,6 +69,43 @@ export default function CreatePage({
 
   // Keep track of textarea refs for Markdown toolbar insertion
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+
+  const showSavedSet = (set: SetDetails) => {
+    setOriginal(set);
+    setName(set.name);
+    setDescription(set.description ?? "");
+    setIsPrivate(!set.isPublic);
+    setCards(set.cards.map((card) => ({ id: genId(), serverId: card.id, front: card.front, back: card.back })));
+  };
+
+  useEffect(() => {
+    if (setId === undefined) return;
+    let active = true;
+    setLoadError(null);
+    loadSet(setId)
+      .then((set) => {
+        if (!active) return;
+        if (set) showSavedSet(set);
+        else setLoadError("This set doesn't exist, or you need to sign in to edit it.");
+      })
+      .catch((cause: unknown) => {
+        console.error(cause);
+        if (active) setLoadError("Could not load this set. Refresh to try again.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [setId, userId]);
+
+  const blockedMessage = !isEditing
+    ? null
+    : (loadError ??
+      (!original ? "Loading…" : original.ownerId !== userId ? "You can only edit your own sets." : null));
+
+  const leavePage = () =>
+    setId === undefined
+      ? void routerNavigate({ to: "/" })
+      : void routerNavigate({ to: "/sets/$setId", params: { setId: String(setId) } });
 
   const addCard = () => {
     setCards((prev) => [...prev, { id: genId(), front: "", back: "" }]);
@@ -120,7 +161,19 @@ export default function CreatePage({
       return;
     }
 
-    const validCards = cards.filter((c) => c.front.trim() && c.back.trim());
+    const incompleteIndex = cards.findIndex((c) => !c.front.trim() !== !c.back.trim());
+    if (incompleteIndex !== -1) {
+      setError(`Card ${incompleteIndex + 1} needs both a front and a back.`);
+      return;
+    }
+
+    const tooLongIndex = cards.findIndex(isCardTooLong);
+    if (tooLongIndex !== -1) {
+      setError(`Card ${tooLongIndex + 1} is too long. Cards can be up to about 10,000 characters.`);
+      return;
+    }
+
+    const validCards = cards.filter((c) => c.front.trim());
     if (validCards.length === 0) {
       setError("Add at least one complete flashcard (front and back).");
       return;
@@ -129,16 +182,27 @@ export default function CreatePage({
     setError(null);
     setSubmitting(true);
 
+    const data: NewFlashcardSet = {
+      name: name.trim(),
+      description: description.trim(),
+      isPublic: !isPrivate,
+      cards: validCards.map(({ serverId, front, back }) => ({
+        id: serverId,
+        front: front.trim(),
+        back: back.trim(),
+      })),
+    };
+
     try {
-      await onSaveSet?.({
-        name: name.trim(),
-        description: description.trim(),
-        category,
-        cards: validCards.map(({ front, back }) => ({ front: front.trim(), back: back.trim() })),
-      });
-      void routerNavigate({ to: "/" });
+      if (original) await updateSet(original, data);
+      else await onSaveSet(data);
+      leavePage();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save set. Try again.");
+      const message = err instanceof Error ? err.message : "Failed to save set. Try again.";
+      // Part of an edit may have saved, so show the set's real state before any retry.
+      const latest = original ? await loadSet(original.id).catch(() => null) : null;
+      if (latest) showSavedSet(latest);
+      setError(latest ? `${message} Showing what was saved.` : message);
       setSubmitting(false);
     }
   };
@@ -150,23 +214,26 @@ export default function CreatePage({
           <button
             type="button"
             className="cr-back-btn"
-            onClick={() => void routerNavigate({ to: "/" })}
+            onClick={leavePage}
           >
             <ArrowLeft size={16} aria-hidden="true" />
             <span>Cancel</span>
           </button>
-          <h1 className="cr-page-title">Create Flashcard Set</h1>
+          <h1 className="cr-page-title">{isEditing ? "Edit Flashcard Set" : "Create Flashcard Set"}</h1>
           <button
-            type="button"
+            type="submit"
             form="create-set-form"
             className="cr-save-btn"
-            disabled={submitting}
+            disabled={submitting || blockedMessage !== null}
           >
             <Save size={16} aria-hidden="true" />
-            <span>{submitting ? "Saving..." : "Save Set"}</span>
+            <span>{submitting ? "Saving..." : isEditing ? "Save Changes" : "Save Set"}</span>
           </button>
         </div>
 
+        {blockedMessage ? (
+          <p className="sp-message">{blockedMessage}</p>
+        ) : (
         <form id="create-set-form" className="cr-form" onSubmit={handleSubmit}>
           {/* Metadata Section */}
           <section className="cr-section">
@@ -196,20 +263,18 @@ export default function CreatePage({
               />
             </div>
 
-            <div className="cr-field">
-              <label htmlFor="set-category">Category</label>
-              <select
-                id="set-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <label className="cr-private">
+              <input
+                id="set-private"
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+              />
+              <span>
+                <strong>Keep this set private</strong>
+                <small>Public sets can be found and viewed by anyone. Only you can see private sets.</small>
+              </span>
+            </label>
           </section>
 
           {/* Cards Builder Section */}
@@ -292,6 +357,7 @@ export default function CreatePage({
             </p>
           )}
         </form>
+        )}
       </div>
     </AppLayout>
   );

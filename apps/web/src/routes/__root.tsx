@@ -10,6 +10,7 @@ import "@mantine/notifications/styles.css";
 import type { QueryClient } from "@tanstack/react-query";
 
 import appCss from "../styles.css?url";
+import { AuthProvider } from "../lib/auth";
 import { theme } from "../theme";
 
 interface MyRouterContext {
@@ -48,9 +49,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<MantineProvider theme={theme}>
-                    <AppShell>
-                    <AppShell.Main>{children}</AppShell.Main>
-                    </AppShell>
+					<Notifications />
+					<AuthProvider>
+						<AppShell>
+							<AppShell.Main>{children}</AppShell.Main>
+						</AppShell>
+					</AuthProvider>
 				</MantineProvider>
 				<Scripts />
 			</body>

@@ -15,7 +15,11 @@ import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SetsSetIdIndexRouteImport } from './routes/sets.$setId.index'
+import { Route as SetsSetIdEditRouteImport } from './routes/sets.$setId.edit'
+import { Route as SetsSetIdStudyRouteImport } from './routes/sets.$setId.study'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,9 +51,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetsSetIdIndexRoute = SetsSetIdIndexRouteImport.update({
+  id: '/sets/$setId/',
+  path: '/sets/$setId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetsSetIdEditRoute = SetsSetIdEditRouteImport.update({
+  id: '/sets/$setId/edit',
+  path: '/sets/$setId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetsSetIdStudyRoute = SetsSetIdStudyRouteImport.update({
+  id: '/sets/$setId/study',
+  path: '/sets/$setId/study',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -60,7 +84,11 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sets/$setId/edit': typeof SetsSetIdEditRoute
+  '/sets/$setId/study': typeof SetsSetIdStudyRoute
+  '/sets/$setId/': typeof SetsSetIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +97,11 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sets/$setId/edit': typeof SetsSetIdEditRoute
+  '/sets/$setId/study': typeof SetsSetIdStudyRoute
+  '/sets/$setId': typeof SetsSetIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +111,11 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sets/$setId/edit': typeof SetsSetIdEditRoute
+  '/sets/$setId/study': typeof SetsSetIdStudyRoute
+  '/sets/$setId/': typeof SetsSetIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +126,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/groups'
     | '/login'
+    | '/search'
     | '/signup'
+    | '/sets/$setId/edit'
+    | '/sets/$setId/study'
+    | '/sets/$setId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +139,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/groups'
     | '/login'
+    | '/search'
     | '/signup'
+    | '/sets/$setId/edit'
+    | '/sets/$setId/study'
+    | '/sets/$setId'
   id:
     | '__root__'
     | '/'
@@ -108,7 +152,11 @@ export interface FileRouteTypes {
     | '/create'
     | '/groups'
     | '/login'
+    | '/search'
     | '/signup'
+    | '/sets/$setId/edit'
+    | '/sets/$setId/study'
+    | '/sets/$setId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +166,11 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
+  SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
+  SetsSetIdEditRoute: typeof SetsSetIdEditRoute
+  SetsSetIdStudyRoute: typeof SetsSetIdStudyRoute
+  SetsSetIdIndexRoute: typeof SetsSetIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,11 +217,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sets/$setId/': {
+      id: '/sets/$setId/'
+      path: '/sets/$setId'
+      fullPath: '/sets/$setId/'
+      preLoaderRoute: typeof SetsSetIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sets/$setId/edit': {
+      id: '/sets/$setId/edit'
+      path: '/sets/$setId/edit'
+      fullPath: '/sets/$setId/edit'
+      preLoaderRoute: typeof SetsSetIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sets/$setId/study': {
+      id: '/sets/$setId/study'
+      path: '/sets/$setId/study'
+      fullPath: '/sets/$setId/study'
+      preLoaderRoute: typeof SetsSetIdStudyRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -182,7 +262,11 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
+  SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  SetsSetIdEditRoute: SetsSetIdEditRoute,
+  SetsSetIdStudyRoute: SetsSetIdStudyRoute,
+  SetsSetIdIndexRoute: SetsSetIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

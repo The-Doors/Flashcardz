@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Card;
 use App\Models\Deck;
+use App\Models\Review;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\PostgresTestCase;
@@ -37,6 +38,153 @@ class DeckControllerTest extends PostgresTestCase
 
         $this->actingAs($owner)->getJson('/api/decks')->assertOk()->assertJsonCount(2, 'data')
             ->assertJsonMissing(['id' => $private->id]);
+    }
+
+    public function test_mine_filter_lists_only_the_users_own_decks(): void
+    {
+        $owner = $this->createUser();
+        $other = $this->createUser();
+        $private = Deck::factory()->for($owner)->create();
+        $public = Deck::factory()->for($owner)->public()->create();
+        Deck::factory()->for($other)->public()->create();
+
+        $response = $this->actingAs($owner)->getJson('/api/decks?mine=true')->assertOk()->assertJsonCount(2, 'data');
+
+        $this->assertSame([$public->id, $private->id], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_mine_filter_returns_nothing_for_guests(): void
+    {
+        Deck::factory()->for($this->createUser())->public()->create();
+
+        $this->getJson('/api/decks?mine=true')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_mine_filter_sorts_by_most_recently_studied(): void
+    {
+        $owner = $this->createUser();
+        $older = Deck::factory()->for($owner)->create();
+        $newer = Deck::factory()->for($owner)->create();
+        $neverStudied = Deck::factory()->for($owner)->create();
+        Review::factory()->for(Card::factory()->for($older))->create(['review_datetime' => '2026-10-20 09:00:00 UTC']);
+        $newerCard = Card::factory()->for($newer)->create();
+        Review::factory()->for($newerCard)->create(['review_datetime' => '2026-10-21 09:00:00 UTC']);
+        Review::factory()->for($newerCard)->create(['review_datetime' => '2026-10-25 09:00:00 UTC']);
+
+        $response = $this->actingAs($owner)->getJson('/api/decks?mine=true')->assertOk();
+
+        $this->assertSame([$newer->id, $older->id, $neverStudied->id], array_column($response->json('data'), 'id'));
+        $response->assertJsonPath('data.0.last_studied_at', '2026-10-25T09:00:00.000000Z')->assertJsonPath('data.2.last_studied_at', null);
+    }
+
+    public function test_last_studied_is_not_included_outside_the_mine_filter(): void
+    {
+        $owner = $this->createUser();
+        Deck::factory()->for($owner)->create();
+
+        $this->actingAs($owner)->getJson('/api/decks')->assertOk()->assertJsonMissingPath('data.0.last_studied_at');
+    }
+
+    public function test_community_lists_public_decks_with_cards_and_their_author(): void
+    {
+        $author = $this->createUser();
+        $listed = Deck::factory()->for($author)->public()->hasCards(2)->create();
+        Deck::factory()->for($author)->public()->create();
+        Deck::factory()->for($author)->hasCards(1)->create();
+        Deck::factory()->for($author)->public()->hasCards(1)->trashed()->create();
+
+        $this->getJson('/api/decks/community')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $listed->id)
+            ->assertJsonPath('data.0.cards_count', 2)
+            ->assertJsonPath('data.0.learners_count', 0)
+            ->assertJsonPath('data.0.user', ['id' => $author->id, 'username' => $author->username]);
+    }
+
+    public function test_community_excludes_the_viewers_private_decks(): void
+    {
+        $owner = $this->createUser();
+        Deck::factory()->for($owner)->hasCards(1)->create();
+
+        $this->actingAs($owner)->getJson('/api/decks/community')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_community_counts_different_learners_including_copies_but_not_undone_reviews(): void
+    {
+        $author = $this->createUser();
+        $deck = Deck::factory()->for($author)->public()->create();
+        $card = Card::factory()->for($deck)->create();
+        Review::factory()->for($card)->create();
+        Review::factory()->for($card)->create();
+        Review::factory()->for($card)->create(['user_id' => $this->createUser()->id])->delete();
+        $learner = $this->createUser();
+        $copy = Deck::factory()->for($learner)->create(['source_deck_id' => $deck->id]);
+        Review::factory()->for(Card::factory()->for($copy))->create();
+
+        $this->getJson('/api/decks/community')->assertOk()->assertJsonPath('data.0.id', $deck->id)->assertJsonPath('data.0.learners_count', 2);
+    }
+
+    #[DataProvider('communitySorts')]
+    public function test_community_sorts(string $sort, array $expectedOrder): void
+    {
+        $author = $this->createUser();
+        $popular = Deck::factory()->for($author)->public()->hasCards(1)->create();
+        Review::factory()->for($popular->cards()->first())->create();
+        $large = Deck::factory()->for($author)->public()->hasCards(3)->create();
+        $newest = Deck::factory()->for($author)->public()->hasCards(1)->create();
+        $decks = compact('popular', 'large', 'newest');
+
+        $response = $this->getJson("/api/decks/community?sort={$sort}")->assertOk();
+
+        $this->assertSame(array_map(fn (string $name): int => $decks[$name]->id, $expectedOrder), array_column($response->json('data'), 'id'));
+    }
+
+    public static function communitySorts(): array
+    {
+        return [
+            'popular' => ['popular', ['popular', 'newest', 'large']],
+            'newest' => ['newest', ['newest', 'large', 'popular']],
+            'cards' => ['cards', ['large', 'newest', 'popular']],
+        ];
+    }
+
+    public function test_community_rejects_an_unknown_sort(): void
+    {
+        $this->getJson('/api/decks/community?sort=invalid')->assertUnprocessable()->assertJsonValidationErrors(['sort']);
+    }
+
+    public function test_search_matches_name_or_description_ignoring_case(): void
+    {
+        $owner = $this->createUser();
+        $byName = Deck::factory()->for($owner)->create(['name' => 'Spanish Verbs', 'description' => null]);
+        $byDescription = Deck::factory()->for($owner)->create(['name' => 'Week 3', 'description' => 'irregular spanish']);
+        Deck::factory()->for($owner)->create(['name' => 'Biology', 'description' => null]);
+
+        $response = $this->actingAs($owner)->getJson('/api/decks?search=SPANISH')->assertOk()->assertJsonCount(2, 'data');
+
+        $this->assertSame([$byDescription->id, $byName->id], array_column($response->json('data'), 'id'));
+        $this->assertStringContainsString('search=SPANISH', $response->json('first_page_url'));
+    }
+
+    public function test_search_only_returns_decks_the_user_can_see(): void
+    {
+        $owner = $this->createUser();
+        $other = $this->createUser();
+        $mine = Deck::factory()->for($owner)->create(['name' => 'Physics mine']);
+        $public = Deck::factory()->for($other)->public()->create(['name' => 'Physics public']);
+        Deck::factory()->for($other)->create(['name' => 'Physics private']);
+
+        $this->getJson('/api/decks?search=physics')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $public->id);
+        $response = $this->actingAs($owner)->getJson('/api/decks?search=physics')->assertOk()->assertJsonCount(2, 'data');
+        $this->assertSame([$public->id, $mine->id], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_search_treats_wildcards_as_literal_text(): void
+    {
+        $owner = $this->createUser();
+        $literal = Deck::factory()->for($owner)->create(['name' => '100% accuracy']);
+        Deck::factory()->for($owner)->create(['name' => 'Chemistry']);
+
+        $this->actingAs($owner)->getJson('/api/decks?search=%25')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $literal->id);
     }
 
     public function test_guest_can_view_a_public_deck_but_private_decks_return_404(): void

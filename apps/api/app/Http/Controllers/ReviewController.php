@@ -44,6 +44,26 @@ class ReviewController extends Controller
         return response()->json($cards->toArray() + ['meta' => ['date' => $date, 'timezone' => $timezone, 'next_card_id' => $nextCard?->id]]);
     }
 
+    /**
+     * Get how many different cards the user studied on each day.
+     */
+    public function activity(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Review::class);
+        $request->validate(['timezone' => ['sometimes', 'required', 'timezone']]);
+
+        $days = $request->user()->reviews()
+            ->selectRaw('date(review_datetime AT TIME ZONE ?) AS day, count(DISTINCT card_id) AS cards', [$request->input('timezone', 'UTC')])
+            ->groupBy('day')
+            ->orderBy('day')
+            ->toBase()
+            ->get();
+
+        return response()->json([
+            'data' => $days->map(fn (object $day): array => ['date' => (string) $day->day, 'cards' => (int) $day->cards])->all(),
+        ]);
+    }
+
     public function store(StoreReviewRequest $request, ReviewQueue $queue, Scheduler $scheduler): JsonResponse
     {
         $review = DB::transaction(function () use ($request, $queue, $scheduler): Review {

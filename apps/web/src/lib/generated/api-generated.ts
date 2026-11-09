@@ -216,11 +216,6 @@ export type AuthorizationExceptionResponse = {
   message: string;
 };
 
-export type ModelNotFoundExceptionResponse = {
-  /** Error overview. */
-  message: string;
-};
-
 /**
  * A detailed description of each field that failed validation.
  */
@@ -231,6 +226,11 @@ export type ValidationExceptionResponse = {
   message: string;
   /** A detailed description of each field that failed validation. */
   errors: ValidationExceptionResponseErrors;
+};
+
+export type ModelNotFoundExceptionResponse = {
+  /** Error overview. */
+  message: string;
 };
 
 export type CardsIndexParams = {
@@ -257,6 +257,108 @@ export type CardsIndex200 = {
   /** @nullable */
   to: number | null;
   total: string;
+};
+
+export type DecksCommunityParams = {
+sort?: DecksCommunitySort;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
+
+export type DecksCommunitySort = typeof DecksCommunitySort[keyof typeof DecksCommunitySort];
+
+
+export const DecksCommunitySort = {
+  popular: 'popular',
+  newest: 'newest',
+  cards: 'cards',
+} as const;
+
+export type DecksCommunity200LinksItem = {
+  /** @nullable */
+  url: string | null;
+  label: string;
+  active: boolean;
+};
+
+export type DecksCommunity200 = {
+  /** @minimum 1 */
+  current_page: number;
+  data: Deck[];
+  /** @nullable */
+  first_page_url: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  from: number | null;
+  /** @nullable */
+  last_page_url: string | null;
+  /** @minimum 1 */
+  last_page: number;
+  /** Generated paginator links. */
+  links: DecksCommunity200LinksItem[];
+  /** @nullable */
+  next_page_url: string | null;
+  /**
+     * Base path for paginator generated URLs.
+     * @nullable
+     */
+  path: string | null;
+  /**
+     * Number of items shown per page.
+     * @minimum 0
+     */
+  per_page: number;
+  /** @nullable */
+  prev_page_url: string | null;
+  /**
+     * Number of the last item in the slice.
+     * @minimum 1
+     * @nullable
+     */
+  to: number | null;
+  /**
+     * Total number of items being paginated.
+     * @minimum 0
+     */
+  total: number;
+};
+
+export type DecksIndexParams = {
+/**
+ * @maxLength 255
+ * @nullable
+ */
+search?: string | null;
+mine?: DecksIndexMine;
+};
+
+export type DecksIndexMine = typeof DecksIndexMine[keyof typeof DecksIndexMine];
+
+
+export const DecksIndexMine = {
+  yes: 'yes',
+  on: 'on',
+  STRING_1: '1',
+  NUMBER_1: 1,
+  STRING_true: 'true',
+  BOOLEAN_true: true,
+} as const;
+
+export type ReviewsActivityParams = {
+timezone?: string;
+};
+
+export type ReviewsActivity200DataItem = {
+  date: string;
+  cards: number;
+};
+
+export type ReviewsActivity200 = {
+  data: ReviewsActivity200DataItem[];
 };
 
 export type ReviewsIndexParams = {
@@ -667,6 +769,68 @@ const res = await fetch(getCardsCopyUrl(card),
 
 
 
+export type decksCommunityResponse200 = {
+  data: DecksCommunity200
+  status: 200
+}
+
+export type decksCommunityResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type decksCommunityResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type decksCommunityResponseSuccess = (decksCommunityResponse200) & {
+  headers: Headers;
+};
+export type decksCommunityResponseError = (decksCommunityResponse403 | decksCommunityResponse422) & {
+  headers: Headers;
+};
+
+export type decksCommunityResponse = (decksCommunityResponseSuccess | decksCommunityResponseError)
+
+export const getDecksCommunityUrl = (params?: DecksCommunityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/decks/community?${stringifiedParams}` : `/api/decks/community`
+}
+
+/**
+ * @summary List public sets that have cards, with their author and how many people have studied them
+ */
+export const decksCommunity = async (params?: DecksCommunityParams, options?: RequestInit): Promise<decksCommunityResponse> => {
+
+  const res = await fetch(getDecksCommunityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: decksCommunityResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as decksCommunityResponse
+}
+
+
+
 export type decksIndexResponse200 = {
   data: LengthAwarePaginator
   status: 200
@@ -677,26 +841,38 @@ export type decksIndexResponse403 = {
   status: 403
 }
 
+export type decksIndexResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
 export type decksIndexResponseSuccess = (decksIndexResponse200) & {
   headers: Headers;
 };
-export type decksIndexResponseError = (decksIndexResponse403) & {
+export type decksIndexResponseError = (decksIndexResponse403 | decksIndexResponse422) & {
   headers: Headers;
 };
 
 export type decksIndexResponse = (decksIndexResponseSuccess | decksIndexResponseError)
 
-export const getDecksIndexUrl = () => {
+export const getDecksIndexUrl = (params?: DecksIndexParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/decks`
+  return stringifiedParams.length > 0 ? `/api/decks?${stringifiedParams}` : `/api/decks`
 }
 
-export const decksIndex = async ( options?: RequestInit): Promise<decksIndexResponse> => {
+export const decksIndex = async (params?: DecksIndexParams, options?: RequestInit): Promise<decksIndexResponse> => {
 
-  const res = await fetch(getDecksIndexUrl(),
+  const res = await fetch(getDecksIndexUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1152,6 +1328,73 @@ const res = await fetch(getQuizletImportUrl(),
 
   const data: quizletImportResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as quizletImportResponse
+}
+
+
+
+export type reviewsActivityResponse200 = {
+  data: ReviewsActivity200
+  status: 200
+}
+
+export type reviewsActivityResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type reviewsActivityResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type reviewsActivityResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type reviewsActivityResponseSuccess = (reviewsActivityResponse200) & {
+  headers: Headers;
+};
+export type reviewsActivityResponseError = (reviewsActivityResponse401 | reviewsActivityResponse403 | reviewsActivityResponse422) & {
+  headers: Headers;
+};
+
+export type reviewsActivityResponse = (reviewsActivityResponseSuccess | reviewsActivityResponseError)
+
+export const getReviewsActivityUrl = (params?: ReviewsActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/reviews/activity?${stringifiedParams}` : `/api/reviews/activity`
+}
+
+/**
+ * @summary Get how many different cards the user studied on each day
+ */
+export const reviewsActivity = async (params?: ReviewsActivityParams, options?: RequestInit): Promise<reviewsActivityResponse> => {
+
+  const res = await fetch(getReviewsActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: reviewsActivityResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as reviewsActivityResponse
 }
 
 

@@ -10,19 +10,24 @@ type AuthModalProps = {
   /** Throw an Error (e.g. "Incorrect email or password") to show it in the form. */
   onSignIn?: (data: SignInPayload) => void | Promise<void>;
   onSignUp?: (data: SignUpPayload) => void | Promise<void>;
+  /** The parent removes the modal once a username is saved. Closing means cancelling. */
+  onChooseUsername?: (username: string) => void | Promise<void>;
 };
 
-type Errors = Partial<Record<"name" | "email" | "password" | "confirm", string>>;
+type Errors = Partial<Record<"username" | "email" | "password" | "confirm", string>>;
 
+const USERNAME_RE = /^[A-Za-z0-9_]{1,29}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 
-export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSignUp }: AuthModalProps) {
+export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSignUp, onChooseUsername }: AuthModalProps) {
   const isSignUp = mode === "signup";
+  const isUsername = mode === "username";
+  const asksUsername = isSignUp || isUsername;
   const uid = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -74,7 +79,9 @@ export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSig
 
   const validate = (): Errors => {
     const next: Errors = {};
-    if (isSignUp && !name.trim()) next.name = "Enter your name.";
+    if (asksUsername && !USERNAME_RE.test(username.trim()))
+      next.username = "Use 1–29 letters, numbers, or underscores.";
+    if (isUsername) return next;
     if (!EMAIL_RE.test(email.trim())) next.email = "Enter a valid email address.";
     if (!password) next.password = "Enter your password.";
     else if (isSignUp && password.length < MIN_PASSWORD)
@@ -94,7 +101,11 @@ export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSig
     setFormError(null);
     setSubmitting(true);
     try {
-      if (isSignUp) await onSignUp?.({ name: name.trim(), email: email.trim(), password });
+      if (isUsername) {
+        await onChooseUsername?.(username.trim());
+        return;
+      }
+      if (isSignUp) await onSignUp?.({ username: username.trim(), email: email.trim(), password });
       else await onSignIn?.({ email: email.trim(), password });
       onClose();
     } catch (err) {
@@ -132,61 +143,69 @@ export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSig
         </button>
 
         <h2 id={id("title")} className="am-title">
-          {isSignUp ? "Create your account" : "Welcome back"}
+          {isUsername ? "Choose your username" : isSignUp ? "Create your account" : "Welcome back"}
         </h2>
         <p className="am-sub">
-          {isSignUp ? "Sign up to save your sets and track your progress." : "Sign in to pick up where you left off."}
+          {isUsername
+            ? "Pick a username to finish setting up your account."
+            : isSignUp
+              ? "Sign up to save your sets and track your progress."
+              : "Sign in to pick up where you left off."}
         </p>
 
         <form className="am-form" onSubmit={submit} noValidate>
-          {isSignUp && (
+          {asksUsername && (
             <div className="am-field">
-              <label htmlFor={id("name")}>Name</label>
+              <label htmlFor={id("username")}>Username</label>
               <input
-                {...fieldProps("name")}
+                {...fieldProps("username")}
                 type="text"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
-              {fieldError("name")}
+              {fieldError("username")}
             </div>
           )}
 
-          <div className="am-field">
-            <label htmlFor={id("email")}>Email</label>
-            <input
-              {...fieldProps("email")}
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            {fieldError("email")}
-          </div>
+          {!isUsername && (
+            <>
+              <div className="am-field">
+                <label htmlFor={id("email")}>Email</label>
+                <input
+                  {...fieldProps("email")}
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                {fieldError("email")}
+              </div>
 
-          <div className="am-field">
-            <label htmlFor={id("password")}>Password</label>
-            <div className="am-password">
-              <input
-                {...fieldProps("password")}
-                type={showPassword ? "text" : "password"}
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="am-eye"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                aria-pressed={showPassword}
-              >
-                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-              </button>
-            </div>
-            {fieldError("password")}
-          </div>
+              <div className="am-field">
+                <label htmlFor={id("password")}>Password</label>
+                <div className="am-password">
+                  <input
+                    {...fieldProps("password")}
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="am-eye"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                  </button>
+                </div>
+                {fieldError("password")}
+              </div>
+            </>
+          )}
 
           {isSignUp && (
             <div className="am-field">
@@ -209,16 +228,18 @@ export default function AuthModal({ mode, onModeChange, onClose, onSignIn, onSig
           )}
 
           <button type="submit" className="am-submit" disabled={submitting}>
-            {submitting ? "Please wait…" : isSignUp ? "Sign up" : "Sign in"}
+            {submitting ? "Please wait…" : isUsername ? "Continue" : isSignUp ? "Sign up" : "Sign in"}
           </button>
         </form>
 
-        <p className="am-switch">
-          {isSignUp ? "Already have an account?" : "New to FlashCardz?"}{" "}
-          <button type="button" className="am-link" onClick={switchMode} disabled={submitting}>
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
+        {!isUsername && (
+          <p className="am-switch">
+            {isSignUp ? "Already have an account?" : "New to FlashCardz?"}{" "}
+            <button type="button" className="am-link" onClick={switchMode} disabled={submitting}>
+              {isSignUp ? "Sign in" : "Sign up"}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

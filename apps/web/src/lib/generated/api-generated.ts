@@ -276,55 +276,26 @@ export const DecksCommunitySort = {
   cards: 'cards',
 } as const;
 
-export type DecksCommunity200LinksItem = {
-  /** @nullable */
-  url: string | null;
-  label: string;
-  active: boolean;
-};
+export type DecksCommunity200Links = {[key: string]: unknown};
 
 export type DecksCommunity200 = {
-  /** @minimum 1 */
   current_page: number;
-  data: Deck[];
+  data: string;
+  first_page_url: string;
   /** @nullable */
-  first_page_url: string | null;
-  /**
-     * @minimum 1
-     * @nullable
-     */
   from: number | null;
+  last_page: string;
+  last_page_url: string;
+  links: DecksCommunity200Links;
+  next_page_url: string;
   /** @nullable */
-  last_page_url: string | null;
-  /** @minimum 1 */
-  last_page: number;
-  /** Generated paginator links. */
-  links: DecksCommunity200LinksItem[];
-  /** @nullable */
-  next_page_url: string | null;
-  /**
-     * Base path for paginator generated URLs.
-     * @nullable
-     */
   path: string | null;
-  /**
-     * Number of items shown per page.
-     * @minimum 0
-     */
   per_page: number;
   /** @nullable */
   prev_page_url: string | null;
-  /**
-     * Number of the last item in the slice.
-     * @minimum 1
-     * @nullable
-     */
+  /** @nullable */
   to: number | null;
-  /**
-     * Total number of items being paginated.
-     * @minimum 0
-     */
-  total: number;
+  total: string;
 };
 
 export type DecksIndexParams = {

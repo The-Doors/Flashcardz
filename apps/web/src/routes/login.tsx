@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 import { supabase } from "../lib/supabase";
 
@@ -31,11 +31,11 @@ function LoginPage() {
 			title: "Sign-in failed",
 			message,
 			color: "red",
-			duration: 5000,
+			autoClose: 5000,
 		});
 	}
 
-	async function signInWithEmail(event: SubmitEvent) {
+	async function signInWithEmail(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (!supabase) {
 			showError(
@@ -71,7 +71,7 @@ function LoginPage() {
 	}
 
 	return (
-		<Center mih="100%" p="md">
+		<Center mih="100dvh" p="md">
 			<Stack w="100%" maw={900} gap="md">
 				<Paper shadow="md" radius="md" withBorder>
 					<SimpleGrid cols={{ base: 1, sm: 2 }}>

@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 import { supabase } from "../lib/supabase";
 
@@ -33,11 +33,11 @@ function SignupPage() {
 			title: "Account creation failed",
 			message: errorMessage,
 			color: "red",
-			duration: 5000,
+			autoClose: 5000,
 		});
 	}
 
-	async function createAccount(event: SubmitEvent) {
+	async function createAccount(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setMessage(null);
 
@@ -82,7 +82,7 @@ function SignupPage() {
 	}
 
 	return (
-		<Center mih="100%" p="md">
+		<Center mih="100dvh" p="md">
 			<Stack w="100%" maw={900} gap="md">
 				<Paper shadow="md" radius="md" withBorder>
 					<SimpleGrid cols={{ base: 1, sm: 2 }}>

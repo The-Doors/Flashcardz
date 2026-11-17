@@ -1,216 +1,239 @@
-import { useEffect, useRef, useState } from "react";
+import {
+	Button,
+	Center,
+	Group,
+	Menu,
+	Paper,
+	SimpleGrid,
+	Stack,
+	Text,
+	Title,
+} from "@mantine/core";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  SlidersHorizontal,
-  TrendingUp,
-  Sparkles,
-  Layers,
-  Users,
-  User,
-  ChevronRight,
-  Check,
+	Check,
+	ChevronRight,
+	Layers,
+	SlidersHorizontal,
+	Sparkles,
+	TrendingUp,
+	User,
+	Users,
 } from "lucide-react";
+import { useState } from "react";
+import { loadCommunitySets } from "../lib/api-lib";
 import AppLayout from "./AppLayout";
 import { cardLabel } from "./formatters";
-import { loadCommunitySets } from "../lib/api-lib";
+import PageLayout, { PageMessage } from "./PageLayout";
 import type {
-  ActivityData,
-  CommunitySet,
-  CommunitySort,
-  NavId,
-  SignInPayload,
-  SignUpPayload,
-  UserInfo,
+	ActivityData,
+	CommunitySet,
+	CommunitySort,
+	NavId,
+	SignInPayload,
+	SignUpPayload,
+	UserInfo,
 } from "./types";
 import "./CommunityPage.css";
-import "./SetPage.css";
 
 type CommunityPageProps = {
-  appName?: string;
-  user?: UserInfo;
-  onSearch?: (query: string) => void;
-  onLogout?: () => void;
-  onSignIn?: (data: SignInPayload) => void | Promise<void>;
-  onSignUp?: (data: SignUpPayload) => void | Promise<void>;
-  activity?: ActivityData;
-  onOpenSet?: (set: CommunitySet) => void;
-  onNavigate?: (id: NavId) => void;
+	appName?: string;
+	user?: UserInfo;
+	onSearch?: (query: string) => void;
+	onLogout?: () => void;
+	onSignIn?: (data: SignInPayload) => void | Promise<void>;
+	onSignUp?: (data: SignUpPayload) => void | Promise<void>;
+	activity?: ActivityData;
+	onOpenSet?: (set: CommunitySet) => void;
+	onNavigate?: (id: NavId) => void;
 };
 
-const SORT_OPTIONS: { id: CommunitySort; label: string; icon: typeof TrendingUp }[] = [
-  { id: "popular", label: "Most popular", icon: TrendingUp },
-  { id: "newest", label: "Newest", icon: Sparkles },
-  { id: "cards", label: "Most cards", icon: Layers },
+const SORT_OPTIONS: {
+	id: CommunitySort;
+	label: string;
+	icon: typeof TrendingUp;
+}[] = [
+	{ id: "popular", label: "Most popular", icon: TrendingUp },
+	{ id: "newest", label: "Newest", icon: Sparkles },
+	{ id: "cards", label: "Most cards", icon: Layers },
 ];
 
 const EMPTY_SETS: CommunitySet[] = [];
 
 export default function CommunityPage({
-  onOpenSet,
-  onNavigate,
-  ...layoutProps
+	onOpenSet,
+	onNavigate,
+	...layoutProps
 }: CommunityPageProps) {
-  const navigate = useNavigate();
-  const [sortBy, setSortBy] = useState<CommunitySort>("popular");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
+	const navigate = useNavigate();
+	const [sortBy, setSortBy] = useState<CommunitySort>("popular");
 
-  const community = useInfiniteQuery({
-    queryKey: ["community-sets", sortBy],
-    queryFn: ({ pageParam }) => loadCommunitySets(sortBy, pageParam),
-    initialPageParam: 1,
-    getNextPageParam: (last) => (last.page < last.lastPage ? last.page + 1 : undefined),
-  });
-  const sets = community.data?.pages.flatMap((page) => page.sets) ?? EMPTY_SETS;
+	const community = useInfiniteQuery({
+		queryKey: ["community-sets", sortBy],
+		queryFn: ({ pageParam }) => loadCommunitySets(sortBy, pageParam),
+		initialPageParam: 1,
+		getNextPageParam: (last) =>
+			last.page < last.lastPage ? last.page + 1 : undefined,
+	});
+	const sets = community.data?.pages.flatMap((page) => page.sets) ?? EMPTY_SETS;
 
-  const openSet =
-    onOpenSet ??
-    ((set: CommunitySet) => void navigate({ to: "/sets/$setId", params: { setId: String(set.id) } }));
+	const openSet =
+		onOpenSet ??
+		((set: CommunitySet) =>
+			void navigate({ to: "/sets/$setId", params: { setId: String(set.id) } }));
 
-  // Close the sort popover on outside click or Escape
-  useEffect(() => {
-    if (!filterOpen) return;
-    const onClick = (e: globalThis.MouseEvent) => {
-      if (
-        filterRef.current &&
-        e.target instanceof Node &&
-        !filterRef.current.contains(e.target)
-      ) {
-        setFilterOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFilterOpen(false);
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [filterOpen]);
+	const currentSortLabel =
+		SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Most popular";
 
-  const currentSortLabel =
-    SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Most popular";
-
-  return (
-    <AppLayout active="community" onNavigate={onNavigate} {...layoutProps}>
-      <div className="cp-page">
-        {/* Page Header + Sort Button */}
-        <div className="cp-header">
-          <div>
-            <h1 className="cp-title">Community Sets</h1>
-            <p className="cp-subtitle">
-              Discover and study flashcard sets shared by learners across the community.
-            </p>
-          </div>
-
-          <div className="cp-filter-wrap" ref={filterRef}>
-            <button
-              type="button"
-              className={`cp-filter-btn ${filterOpen ? "active" : ""}`}
-              onClick={() => setFilterOpen((o) => !o)}
-              aria-haspopup="dialog"
-              aria-expanded={filterOpen}
-            >
-              <SlidersHorizontal size={16} aria-hidden="true" />
-              <span>Sort</span>
-              <span className="cp-filter-summary">{currentSortLabel}</span>
-            </button>
-
-            {filterOpen && (
-              <div className="cp-filter-menu" role="dialog" aria-label="Sort sets">
-                <div className="cp-filter-group">
-                  <span className="cp-filter-label">Sort by</span>
-                  <div className="cp-filter-options">
-                    {SORT_OPTIONS.map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`cp-menu-item ${sortBy === id ? "selected" : ""}`}
-                        onClick={() => setSortBy(id)}
-                      >
-                        <Icon size={15} aria-hidden="true" />
-                        <span>{label}</span>
-                        {sortBy === id && <Check size={15} className="cp-check" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {community.isPending ? (
-          <p className="sp-message">Loading…</p>
-        ) : community.isError ? (
-          <p className="sp-message" role="alert">Could not load community sets. Refresh to try again.</p>
-        ) : sets.length > 0 ? (
-          <>
-            <div className="cp-grid">
-              {sets.map((set) => (
-                <button
-                  key={set.id}
-                  className="cp-card"
-                  onClick={() => openSet(set)}
-                >
-                  <div className="cp-card-top">
-                    <span
-                      className="cp-studies"
-                      title={`${set.studyCount} ${set.studyCount === 1 ? "person has" : "people have"} studied this`}
-                    >
-                      <Users size={13} aria-hidden="true" />
-                      {set.studyCount.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <span className="cp-card-name">{set.name}</span>
-                  {set.description && (
-                    <span className="cp-card-desc">{set.description}</span>
-                  )}
-
-                  <div className="cp-card-foot">
-                    <span className="cp-author">
-                      <User size={13} aria-hidden="true" />
-                      {set.author}
-                    </span>
-                    <span className="cp-cards-count">{cardLabel(set.cardCount)}</span>
-                  </div>
-
-                  <ChevronRight size={18} className="cp-chevron" aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-
-            {community.hasNextPage && (
-              <div className="cp-load-more">
-                <button
-                  type="button"
-                  className="sp-btn"
-                  disabled={community.isFetchingNextPage}
-                  onClick={() => void community.fetchNextPage()}
-                >
-                  {community.isFetchingNextPage ? "Loading…" : "Load more"}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="cp-grid">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="cp-card cp-card-empty" aria-hidden={i > 0}>
-                {i === 0 && (
-                  <div className="cp-empty-msg">
-                    <Layers size={22} aria-hidden="true" />
-                    <strong>No community sets found</strong>
-                    <span>Community flashcard sets will appear here.</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </AppLayout>
-  );
+	return (
+		<AppLayout active="community" onNavigate={onNavigate} {...layoutProps}>
+			<PageLayout size={1100} gap={20}>
+				<Group justify="space-between" align="flex-start" gap={16}>
+					<Stack gap={4}>
+						<Title order={1}>Community Sets</Title>
+						<Text c="dimmed">
+							Discover and study flashcard sets shared by learners across the
+							community.
+						</Text>
+					</Stack>
+					<Menu position="bottom-end" width={240}>
+						<Menu.Target>
+							<Button
+								variant="default"
+								leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
+							>
+								Sort{" "}
+								<Text component="span" c="dimmed" size="sm" ml={10}>
+									{currentSortLabel}
+								</Text>
+							</Button>
+						</Menu.Target>
+						<Menu.Dropdown>
+							<Menu.Label>Sort by</Menu.Label>
+							{SORT_OPTIONS.map(({ id, label, icon: Icon }) => (
+								<Menu.Item
+									key={id}
+									leftSection={<Icon size={15} aria-hidden="true" />}
+									rightSection={
+										sortBy === id ? (
+											<Check size={15} aria-hidden="true" />
+										) : undefined
+									}
+									onClick={() => setSortBy(id)}
+								>
+									{label}
+								</Menu.Item>
+							))}
+						</Menu.Dropdown>
+					</Menu>
+				</Group>
+				{community.isPending ? (
+					<PageMessage>Loading…</PageMessage>
+				) : community.isError ? (
+					<PageMessage role="alert">
+						Could not load community sets. Refresh to try again.
+					</PageMessage>
+				) : sets.length > 0 ? (
+					<>
+						<SimpleGrid minColWidth="min(100%, 280px)" spacing={16}>
+							{sets.map((set) => (
+								<Paper
+									component="button"
+									type="button"
+									withBorder
+									key={set.id}
+									className="cp-card"
+									onClick={() => openSet(set)}
+								>
+									<Group justify="flex-end" gap={8}>
+										<Group
+											component="span"
+											gap={4}
+											c="dimmed"
+											fz={12}
+											title={`${set.studyCount} ${set.studyCount === 1 ? "person has" : "people have"} studied this`}
+										>
+											<Users size={13} aria-hidden="true" />
+											{set.studyCount.toLocaleString()}
+										</Group>
+									</Group>
+									<Text
+										component="span"
+										size="15px"
+										fw={600}
+										lh={1.35}
+										lineClamp={2}
+									>
+										{set.name}
+									</Text>
+									{set.description && (
+										<Text
+											component="span"
+											size="xs"
+											c="dimmed"
+											lh={1.4}
+											lineClamp={2}
+										>
+											{set.description}
+										</Text>
+									)}
+									<Group
+										justify="space-between"
+										gap={8}
+										mt="auto"
+										pt={6}
+										c="dimmed"
+										fz={12}
+									>
+										<Group component="span" gap={5}>
+											<User size={13} aria-hidden="true" />
+											{set.author}
+										</Group>
+										<span>{cardLabel(set.cardCount)}</span>
+									</Group>
+									<ChevronRight
+										size={18}
+										className="cp-chevron"
+										aria-hidden="true"
+									/>
+								</Paper>
+							))}
+						</SimpleGrid>
+						{community.hasNextPage && (
+							<Center mt={8}>
+								<Button
+									variant="default"
+									loading={community.isFetchingNextPage}
+									onClick={() => void community.fetchNextPage()}
+								>
+									{community.isFetchingNextPage ? "Loading…" : "Load more"}
+								</Button>
+							</Center>
+						)}
+					</>
+				) : (
+					<SimpleGrid minColWidth="min(100%, 280px)" spacing={16}>
+						{[0, 1, 2, 3, 4, 5].map((i) => (
+							<Paper
+								key={i}
+								withBorder
+								bg="transparent"
+								className="cp-card cp-card-empty"
+								aria-hidden={i > 0}
+							>
+								{i === 0 && (
+									<Stack gap={6} align="center" c="dimmed" fz={12}>
+										<Layers size={22} aria-hidden="true" />
+										<Text fw={600}>No community sets found</Text>
+										<span>Community flashcard sets will appear here.</span>
+									</Stack>
+								)}
+							</Paper>
+						))}
+					</SimpleGrid>
+				)}
+			</PageLayout>
+		</AppLayout>
+	);
 }

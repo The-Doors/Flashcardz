@@ -19,6 +19,8 @@ import {
 	decksShow,
 	decksStore,
 	decksUpdate,
+	jobsShow,
+	quizletImport,
 	type Rating,
 	reviewsActivity,
 	reviewsIndex,
@@ -74,6 +76,32 @@ async function authorizedRequest() {
 	const session = await getSession();
 	if (!session) throw new Error("Sign in to continue.");
 	return optionalAuthRequest();
+}
+
+export function isQuizletSetUrl(source: string) {
+	try {
+		const url = new URL(source.trim());
+		return source.trim().length <= 2048 && url.protocol === "https:"
+			&& ["quizlet.com", "www.quizlet.com"].includes(url.hostname)
+			&& !url.username && !url.password && !url.port
+			&& /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?[1-9][0-9]*(?:\/|$)/.test(url.pathname);
+	} catch {
+		return false;
+	}
+}
+
+export async function importQuizletSet(source: string) {
+	const response = await quizletImport({ source: source.trim() }, await authorizedRequest());
+	if (response.status !== 202)
+		throw new Error(response.data.message || "Could not start the Quizlet import. Try again.");
+	return response.data;
+}
+
+export async function loadImportJob(jobId: number, signal?: AbortSignal) {
+	const response = await jobsShow(jobId, { ...await authorizedRequest(), signal });
+	if (response.status !== 200)
+		throw new Error(response.data.message || "Could not check the import status.");
+	return response.data;
 }
 
 function parseCard(id: number, content: string): CardSides {

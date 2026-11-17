@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { Plus, Trash2, ArrowLeft, Save, Bold, Italic, Code, List } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, Bold, Italic, Code, List, Download } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import AppLayout from "./AppLayout";
+import QuizletImportModal from "./QuizletImportModal";
 import {
   isCardTooLong,
   loadSet,
@@ -65,6 +66,7 @@ export default function CreatePage({
     { id: genId(), front: "", back: "" },
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const [importOpened, setImportOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Keep track of textarea refs for Markdown toolbar insertion
@@ -220,15 +222,22 @@ export default function CreatePage({
             <span>Cancel</span>
           </button>
           <h1 className="cr-page-title">{isEditing ? "Edit Flashcard Set" : "Create Flashcard Set"}</h1>
-          <button
-            type="submit"
-            form="create-set-form"
-            className="cr-save-btn"
-            disabled={submitting || blockedMessage !== null}
-          >
-            <Save size={16} aria-hidden="true" />
-            <span>{submitting ? "Saving..." : isEditing ? "Save Changes" : "Save Set"}</span>
-          </button>
+          <div className="cr-topbar-actions">
+            {!isEditing && (
+              <button type="button" className="cr-back-btn" disabled={submitting} onClick={() => setImportOpened(true)}>
+                <Download size={16} aria-hidden="true" /> Import from Quizlet
+              </button>
+            )}
+            <button
+              type="submit"
+              form="create-set-form"
+              className="cr-save-btn"
+              disabled={submitting || blockedMessage !== null}
+            >
+              <Save size={16} aria-hidden="true" />
+              <span>{submitting ? "Saving..." : isEditing ? "Save Changes" : "Save Set"}</span>
+            </button>
+          </div>
         </div>
 
         {blockedMessage ? (
@@ -359,6 +368,13 @@ export default function CreatePage({
         </form>
         )}
       </div>
+      {!isEditing && (
+        <QuizletImportModal
+          opened={importOpened}
+          onClose={() => setImportOpened(false)}
+          onImported={(id) => void routerNavigate({ to: "/sets/$setId", params: { setId: String(id) } })}
+        />
+      )}
     </AppLayout>
   );
 }

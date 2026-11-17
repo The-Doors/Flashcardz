@@ -1,49 +1,39 @@
-import { useEffect, useRef } from "react";
-import type { FlashcardSet } from "./types";
+import { Button, Group, Modal, Text } from "@mantine/core";
 import { cardLabel } from "./formatters";
-import "./ConfirmDelete.css";
+import type { FlashcardSet } from "./types";
 
 type ConfirmDeleteProps = {
-  set: FlashcardSet;
-  onCancel: () => void;
-  onConfirm: () => void;
+	set: FlashcardSet;
+	onCancel: () => void;
+	onConfirm: () => void;
 };
 
-export default function ConfirmDelete({ set, onCancel, onConfirm }: ConfirmDeleteProps) {
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    cancelRef.current?.focus();
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-    };
-
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onCancel]);
-
-  return (
-    <div className="cd-overlay" onMouseDown={onCancel}>
-      <div
-        className="cd-dialog"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="cd-title"
-        aria-describedby="cd-desc"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <h3 id="cd-title">Delete this set?</h3>
-        <p id="cd-desc">
-          “{set.name}” and its {cardLabel(set.cardCount)} will be permanently deleted. This can’t be undone.
-        </p>
-        <div className="cd-actions">
-          <button ref={cancelRef} className="cd-secondary" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="cd-danger" onClick={onConfirm}>Delete set</button>
-        </div>
-      </div>
-    </div>
-  );
+export default function ConfirmDelete({
+	set,
+	onCancel,
+	onConfirm,
+}: ConfirmDeleteProps) {
+	return (
+		<Modal
+			opened
+			onClose={onCancel}
+			title="Delete this set?"
+			size={400}
+			role="alertdialog"
+			aria-describedby="cd-desc"
+		>
+			<Text id="cd-desc">
+				“{set.name}” and its {cardLabel(set.cardCount)} will be permanently
+				deleted. This can’t be undone.
+			</Text>
+			<Group justify="flex-end" gap={8} mt={20}>
+				<Button data-autofocus variant="default" onClick={onCancel}>
+					Cancel
+				</Button>
+				<Button color="red" onClick={onConfirm}>
+					Delete set
+				</Button>
+			</Group>
+		</Modal>
+	);
 }

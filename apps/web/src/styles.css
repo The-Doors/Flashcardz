@@ -1,30 +1,35 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Cuneiform&display=swap");
 @import "@mantine/core/styles.css";
 
-:root {
-	--surface: #fdfcfc;
-	--surface-raised: #f8f9fa;
-	--surface-sunken: #f1f3f5;
-	--hairline: #dee2e6;
-	--text: #212529;
-	--text-muted: #6c757d;
-	--accent: #f8a32d;
-	--accent-hover: #faab42;
-	--success: #2f9e44;
-	--warning: #f06400;
-	--danger: #ab1919;
-	--info: #1971c2;
+:root[data-mantine-color-scheme] {
+	--bg: #0a0a0b;
+	--panel: #141416;
+	--panel-hover: #202024;
+	--border: #2a2a2f;
+	--text: #e8eaed;
+	--text-muted: #8b8f98;
+	--accent: #3b82f6;
+	--accent-text: #ffffff;
+	--cell-0: #1f1f23;
+	--cell-1: #1e3a6e;
+	--cell-2: #1d4ed8;
+	--cell-3: #3b82f6;
+	--cell-4: #7cb3ff;
+}
 
-	--mantine-font-family: "Noto Sans Cuneiform", sans-serif;
-	--mantine-font-family-headings: "Noto Sans Cuneiform", sans-serif;
-	--mantine-color-body: var(--surface);
-	--mantine-color-text: var(--text);
-	--mantine-color-default: var(--surface);
-	--mantine-color-default-hover: var(--surface-raised);
-	--mantine-color-default-border: var(--hairline);
-	--mantine-color-dimmed: var(--text-muted);
-	--mantine-primary-color-filled: var(--accent);
-	--mantine-primary-color-filled-hover: var(--accent-hover);
+:root[data-mantine-color-scheme="light"] {
+	--bg: #f3f4f6;
+	--panel: #ffffff;
+	--panel-hover: #e9ebef;
+	--border: #d9dce1;
+	--text: #0a0a0b;
+	--text-muted: #5f6672;
+	--accent: #2563eb;
+	--accent-text: #ffffff;
+	--cell-0: #e5e7eb;
+	--cell-1: #bfdbfe;
+	--cell-2: #60a5fa;
+	--cell-3: #2563eb;
+	--cell-4: #1e40af;
 }
 
 html,
@@ -32,9 +37,6 @@ body,
 #app {
 	min-height: 100%;
 }
-
 body {
 	margin: 0;
-	color: var(--text);
-	background: var(--surface);
 }

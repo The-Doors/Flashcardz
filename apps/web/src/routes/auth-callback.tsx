@@ -23,7 +23,7 @@ function AuthCallbackPage() {
 	}, []);
 
 	return (
-		<Center mih="100%" p="md">
+		<Center mih="100dvh" p="md">
 			<Stack w="100%" maw={420}>
 				{failed ? (
 					<>

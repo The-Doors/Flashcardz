@@ -32,7 +32,8 @@ class DeckController extends Controller
                 ->addSelect(['last_studied_at' => Review::query()
                     ->selectRaw('max(app.reviews.review_datetime)')
                     ->join('app.cards as studied_cards', 'studied_cards.id', '=', 'app.reviews.card_id')
-                    ->whereColumn('studied_cards.deck_id', 'app.decks.id')])
+                    ->whereColumn('studied_cards.deck_id', 'app.decks.id')
+                    ->where('app.reviews.user_id', $request->user()?->id)])
                 ->withCasts(['last_studied_at' => 'immutable_datetime'])
                 ->orderByRaw('last_studied_at DESC NULLS LAST'))
             ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query

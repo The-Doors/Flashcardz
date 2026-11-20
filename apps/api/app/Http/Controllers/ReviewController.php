@@ -34,7 +34,7 @@ class ReviewController extends Controller
         $query = $queue->query($request->user(), $now, $timezone, $date, $request->has('deck_id') ? $request->integer('deck_id') : null);
         $nextCard = $date === $today ? $queue->nextCard($query, $now) : null;
         $cards = $query->paginate(25)->withQueryString()->through(function (Card $card) use ($queue, $nextCard, $date, $today): array {
-            return array_diff_key($card->attributesToArray(), ['queue_priority' => true]) + [
+            return array_diff_key($card->attributesToArray(), ['queue_priority' => true, 'latest_review_id' => true]) + [
                 'latest_review_id' => $card->latestReview?->id,
                 'schedule' => $queue->schedule($card)->toArray(),
                 'can_review' => $date === $today && $queue->canReview($card, $nextCard),
@@ -68,7 +68,8 @@ class ReviewController extends Controller
     {
         $review = DB::transaction(function () use ($request, $queue, $scheduler): Review {
             User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
-            $card = Card::with('deck', 'latestReview')->lockForUpdate()->findOrFail($request->integer('card_id'));
+            $card = Card::with('deck')->lockForUpdate()->findOrFail($request->integer('card_id'));
+            $card->setRelation('latestReview', $card->latestReviewBy($request->user()));
             Gate::authorize('create', [Review::class, $card]);
             if ($request->has('deck_id') && $request->integer('deck_id') !== $card->deck_id) {
                 throw ValidationException::withMessages(['deck_id' => 'The selected deck id is invalid.']);
@@ -107,7 +108,7 @@ class ReviewController extends Controller
             $review = Review::with('card.deck')->findOrFail($review->id);
             Gate::authorize('undo', $review);
             $card = Card::lockForUpdate()->findOrFail($review->card_id);
-            abort_if($card->latestReview?->id !== $review->id, 409, 'Only the latest review for this card can be undone.');
+            abort_if($card->latestReviewBy($request->user())?->id !== $review->id, 409, 'Only the latest review for this card can be undone.');
             $review->delete();
         });
 

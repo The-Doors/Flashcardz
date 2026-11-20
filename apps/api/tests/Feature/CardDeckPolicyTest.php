@@ -7,10 +7,16 @@ use App\Models\Deck;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Tests\TestCase;
+use Tests\Support\PostgresTestCase;
 
-class CardDeckPolicyTest extends TestCase
+class CardDeckPolicyTest extends PostgresTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->resetDatabase();
+    }
+
     #[DataProvider('permissions')]
     public function test_deck_and_card_permissions_follow_visibility_and_deck_ownership(string $viewer, bool $public, bool $canView, bool $canWrite, bool $canCopy): void
     {

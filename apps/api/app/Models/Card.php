@@ -48,6 +48,14 @@ class Card extends Model
         return $this->hasOne(Review::class)->latestOfMany();
     }
 
+    /**
+     * Get the user's most recent review of this card, since each study group member keeps their own schedule.
+     */
+    public function latestReviewBy(User $user): ?Review
+    {
+        return $this->reviews()->where('user_id', $user->id)->orderByDesc('id')->first();
+    }
+
     public function sourceCard(): BelongsTo
     {
         return $this->belongsTo(self::class, 'source_card_id');

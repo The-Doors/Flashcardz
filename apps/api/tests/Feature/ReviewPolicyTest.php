@@ -8,10 +8,16 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Tests\TestCase;
+use Tests\Support\PostgresTestCase;
 
-class ReviewPolicyTest extends TestCase
+class ReviewPolicyTest extends PostgresTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->resetDatabase();
+    }
+
     #[DataProvider('permissions')]
     public function test_only_the_owner_can_review_cards_and_undo_their_own_answers(string $viewer, bool $public, bool $allowed): void
     {

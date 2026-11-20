@@ -5,6 +5,10 @@ use App\Http\Controllers\DeckController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\QuizletController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\StudyGroupController;
+use App\Http\Controllers\StudyGroupDeckController;
+use App\Http\Controllers\StudyGroupInvitationController;
+use App\Http\Controllers\StudyGroupMemberController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,4 +36,15 @@ Route::middleware('auth')->group(function (): void {
     Route::apiResource('cards', CardController::class)->only(['store', 'update', 'destroy']);
     Route::post('decks/{deck}/copy', [DeckController::class, 'copy'])->name('decks.copy');
     Route::post('cards/{card}/copy', [CardController::class, 'copy'])->name('cards.copy');
+
+    Route::get('users/search', [UserController::class, 'search'])->middleware('throttle:60,1')->name('users.search');
+    Route::apiResource('study-groups', StudyGroupController::class);
+    Route::post('study-groups/{study_group}/invitations', [StudyGroupInvitationController::class, 'store'])->name('study-groups.invitations.store');
+    Route::delete('study-groups/{study_group}/members/{member}', [StudyGroupMemberController::class, 'destroy'])->name('study-groups.members.destroy');
+    Route::post('study-groups/{study_group}/decks', [StudyGroupDeckController::class, 'store'])->name('study-groups.decks.store');
+    Route::delete('study-groups/{study_group}/decks/{deck}', [StudyGroupDeckController::class, 'destroy'])->whereNumber('deck')->name('study-groups.decks.destroy');
+    Route::get('study-group-invitations', [StudyGroupInvitationController::class, 'index'])->name('study-group-invitations.index');
+    Route::post('study-group-invitations/{invitation}/accept', [StudyGroupInvitationController::class, 'accept'])->name('study-group-invitations.accept');
+    Route::post('study-group-invitations/{invitation}/decline', [StudyGroupInvitationController::class, 'decline'])->name('study-group-invitations.decline');
+    Route::delete('study-group-invitations/{invitation}', [StudyGroupInvitationController::class, 'destroy'])->name('study-group-invitations.destroy');
 });

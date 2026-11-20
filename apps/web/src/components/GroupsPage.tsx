@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
 	Badge,
 	Button,
@@ -12,6 +13,9 @@ import {
 	Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+=======
+import { useState, type FormEvent } from "react";
+>>>>>>> ef5e4db6b299e86f0dd77aa4843bd3a874992ac7
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronRight, Crown, Mail, Plus, Users, X } from "lucide-react";
@@ -299,6 +303,7 @@ function CreateGroupModal({
 		}
 	};
 
+<<<<<<< HEAD
 	return (
 		<Modal opened onClose={onClose} title="Create Study Group" size={440}>
 			<Stack component="form" onSubmit={(e) => void submit(e)} gap={14}>
@@ -330,4 +335,46 @@ function CreateGroupModal({
 			</Stack>
 		</Modal>
 	);
+=======
+  return (
+    <GroupModal title="Create Study Group" onClose={onClose}>
+        <form onSubmit={(e) => void submit(e)} className="gp-modal-form">
+          <div className="gp-field">
+            <label htmlFor="gp-group-name">Group name</label>
+            <input
+              id="gp-group-name"
+              type="text"
+              placeholder="e.g., Biology 101 study circle"
+              value={name}
+              maxLength={255}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="gp-field">
+            <label htmlFor="gp-group-description">Description</label>
+            <textarea
+              id="gp-group-description"
+              placeholder="What will members focus on in this group?"
+              value={description}
+              maxLength={1000}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="gp-modal-actions">
+            <button type="button" className="gp-action-btn outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="gp-action-btn primary" disabled={saving}>
+              {saving ? "Creating…" : "Create group"}
+            </button>
+          </div>
+        </form>
+    </GroupModal>
+  );
+>>>>>>> ef5e4db6b299e86f0dd77aa4843bd3a874992ac7
 }

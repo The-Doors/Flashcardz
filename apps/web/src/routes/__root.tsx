@@ -1,4 +1,8 @@
-import { Anchor, AppShell, MantineProvider, Text } from "@mantine/core";
+import {
+	ColorSchemeScript,
+	localStorageColorSchemeManager,
+	MantineProvider,
+} from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import {
 	createRootRouteWithContext,
@@ -8,10 +12,9 @@ import {
 import "@mantine/notifications/styles.css";
 
 import type { QueryClient } from "@tanstack/react-query";
-
-import appCss from "../styles.css?url";
 import { AuthProvider } from "../lib/auth";
-import { theme } from "../theme";
+import appCss from "../styles.css?url";
+import { cssVariablesResolver, theme } from "../theme";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -45,16 +48,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
+				<ColorSchemeScript
+					defaultColorScheme="dark"
+					localStorageKey="flashcards-theme"
+				/>
 				<HeadContent />
 			</head>
 			<body>
-				<MantineProvider theme={theme}>
+				<MantineProvider
+					theme={theme}
+					cssVariablesResolver={cssVariablesResolver}
+					defaultColorScheme="dark"
+					colorSchemeManager={localStorageColorSchemeManager({
+						key: "flashcards-theme",
+					})}
+				>
 					<Notifications />
-					<AuthProvider>
-						<AppShell>
-							<AppShell.Main>{children}</AppShell.Main>
-						</AppShell>
-					</AuthProvider>
+					<AuthProvider>{children}</AuthProvider>
 				</MantineProvider>
 				<Scripts />
 			</body>

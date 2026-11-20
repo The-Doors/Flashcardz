@@ -57,12 +57,14 @@ export default function SetPage({ setId }: { setId: number }) {
               <Copy size={16} aria-hidden="true" /> {copying ? "Copying…" : "Copy to my sets"}
             </button>
           )}
-          {set && set.ownerId === userId && (
+          {set && (set.ownerId === userId || set.canStudy) && (
             <div className="sp-actions">
-              <Link to="/sets/$setId/edit" params={{ setId: String(setId) }} className="sp-btn">
-                <Pencil size={16} aria-hidden="true" /> Edit
-              </Link>
-              {set.cards.length > 0 && (
+              {set.ownerId === userId && (
+                <Link to="/sets/$setId/edit" params={{ setId: String(setId) }} className="sp-btn">
+                  <Pencil size={16} aria-hidden="true" /> Edit
+                </Link>
+              )}
+              {set.canStudy && set.cards.length > 0 && (
                 <Link to="/sets/$setId/study" params={{ setId: String(setId) }} className="sp-btn sp-btn-primary">
                   <GraduationCap size={16} aria-hidden="true" /> Study
                 </Link>

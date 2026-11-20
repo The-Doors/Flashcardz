@@ -81,11 +81,16 @@ class DeckController extends Controller
         return response()->json($deck->refresh(), 201);
     }
 
-    public function show(Deck $deck): JsonResponse
+    /**
+     * Show a set, including whether the viewer can study it (they own it or it is shared with one of their study groups).
+     */
+    public function show(Request $request, Deck $deck): JsonResponse
     {
         Gate::authorize('view', $deck);
 
-        return response()->json($deck->loadCount('cards'));
+        return response()->json($deck->loadCount('cards')->toArray() + [
+            'can_study' => $request->user() !== null && $deck->isStudiableBy($request->user()),
+        ]);
     }
 
     public function update(UpdateDeckRequest $request, Deck $deck): JsonResponse

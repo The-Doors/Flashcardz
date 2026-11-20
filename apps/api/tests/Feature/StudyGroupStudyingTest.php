@@ -43,7 +43,7 @@ class StudyGroupStudyingTest extends PostgresTestCase
     {
         $this->actingAs($this->member);
 
-        $this->getJson("/api/decks/{$this->deck->id}")->assertOk();
+        $this->getJson("/api/decks/{$this->deck->id}")->assertOk()->assertJsonPath('can_study', true);
         $this->getJson("/api/cards/{$this->card->id}")->assertOk();
         $this->getJson("/api/cards?deck_id={$this->deck->id}")->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/decks')->assertOk()->assertJsonPath('data.0.id', $this->deck->id);
@@ -110,5 +110,12 @@ class StudyGroupStudyingTest extends PostgresTestCase
         $this->getJson("/api/decks/{$this->deck->id}")->assertNotFound();
         $this->getJson('/api/reviews')->assertOk()->assertJsonCount(0, 'data');
         $this->postJson('/api/reviews', ['card_id' => $this->card->id, 'rating' => 3, 'previous_review_id' => null])->assertNotFound();
+    }
+
+    public function test_public_sets_outside_the_users_groups_cannot_be_studied(): void
+    {
+        $public = Deck::factory()->for($this->createUser())->public()->create();
+
+        $this->actingAs($this->member)->getJson("/api/decks/{$public->id}")->assertOk()->assertJsonPath('can_study', false);
     }
 }

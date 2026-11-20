@@ -32,7 +32,8 @@ class DeckController extends Controller
                 ->addSelect(['last_studied_at' => Review::query()
                     ->selectRaw('max(app.reviews.review_datetime)')
                     ->join('app.cards as studied_cards', 'studied_cards.id', '=', 'app.reviews.card_id')
-                    ->whereColumn('studied_cards.deck_id', 'app.decks.id')])
+                    ->whereColumn('studied_cards.deck_id', 'app.decks.id')
+                    ->where('app.reviews.user_id', $request->user()?->id)])
                 ->withCasts(['last_studied_at' => 'immutable_datetime'])
                 ->orderByRaw('last_studied_at DESC NULLS LAST'))
             ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
@@ -80,11 +81,16 @@ class DeckController extends Controller
         return response()->json($deck->refresh(), 201);
     }
 
-    public function show(Deck $deck): JsonResponse
+    /**
+     * Show a set, including whether the viewer can study it (they own it or it is shared with one of their study groups).
+     */
+    public function show(Request $request, Deck $deck): JsonResponse
     {
         Gate::authorize('view', $deck);
 
-        return response()->json($deck->loadCount('cards'));
+        return response()->json($deck->loadCount('cards')->toArray() + [
+            'can_study' => $request->user() !== null && $deck->isStudiableBy($request->user()),
+        ]);
     }
 
     public function update(UpdateDeckRequest $request, Deck $deck): JsonResponse

@@ -1,468 +1,247 @@
-import {
-	Avatar,
-	Badge,
-	Button,
-	Grid,
-	Group,
-	Modal,
-	NativeSelect,
-	Paper,
-	ScrollArea,
-	SimpleGrid,
-	Stack,
-	Tabs,
-	Text,
-	Textarea,
-	TextInput,
-	Title,
-} from "@mantine/core";
-import { useNavigate } from "@tanstack/react-router";
-import {
-	ArrowLeft,
-	ChevronRight,
-	Layers,
-	Plus,
-	Search,
-	Share2,
-	UserCheck,
-	UserPlus,
-	Users,
-} from "lucide-react";
-import { type FormEvent, useMemo, useState } from "react";
+import { useState, type FormEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { notifications } from "@mantine/notifications";
+import { Check, ChevronRight, Crown, Mail, Plus, Users, X } from "lucide-react";
 import AppLayout from "./AppLayout";
-import { cardLabel } from "./formatters";
-import PageLayout from "./PageLayout";
-import type {
-	ActivityData,
-	FlashcardSet,
-	NavId,
-	SignInPayload,
-	SignUpPayload,
-	StudyGroup,
-	UserInfo,
-} from "./types";
+import GroupModal, { notifyError } from "./GroupModal";
+import {
+  acceptInvitation,
+  createGroup,
+  declineInvitation,
+  listMyGroups,
+  listMyInvitations,
+  STUDY_GROUP_INVITATIONS_QUERY_KEY,
+  STUDY_GROUPS_QUERY_KEY,
+  type GroupInvitation,
+} from "../lib/api-lib";
+import { useAuth } from "../lib/auth";
 import "./GroupsPage.css";
 
-type GroupsPageProps = {
-	appName?: string;
-	user?: UserInfo;
-	onSearch?: (query: string) => void;
-	onLogout?: () => void;
-	onSignIn?: (data: SignInPayload) => void | Promise<void>;
-	onSignUp?: (data: SignUpPayload) => void | Promise<void>;
-	activity?: ActivityData;
-	groups?: StudyGroup[];
-	mySets?: FlashcardSet[];
-	onCreateGroup?: (data: {
-		name: string;
-		description: string;
-		category: string;
-	}) => void | Promise<void>;
-	onJoinGroup?: (groupId: string | number) => void | Promise<void>;
-	onLeaveGroup?: (groupId: string | number) => void | Promise<void>;
-	onShareSet?: (
-		groupId: string | number,
-		set: FlashcardSet,
-	) => void | Promise<void>;
-	onNavigate?: (id: NavId) => void;
-};
+export default function GroupsPage() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [answering, setAnswering] = useState<number | null>(null);
 
-const EMPTY_GROUPS: StudyGroup[] = [];
+  const groups = useQuery({
+    queryKey: [STUDY_GROUPS_QUERY_KEY, userId],
+    queryFn: listMyGroups,
+    enabled: !!userId,
+  });
+  const invitations = useQuery({
+    queryKey: [STUDY_GROUP_INVITATIONS_QUERY_KEY, userId],
+    queryFn: listMyInvitations,
+    enabled: !!userId,
+  });
 
-export default function GroupsPage({
-	groups = EMPTY_GROUPS,
-	mySets = [],
-	onCreateGroup,
-	onJoinGroup,
-	onLeaveGroup,
-	onShareSet,
-	onNavigate,
-	...layoutProps
-}: GroupsPageProps) {
-	const routerNavigate = useNavigate();
-	const [tab, setTab] = useState<"my" | "discover">("my");
-	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedGroup, setSelectedGroup] = useState<StudyGroup | null>(null);
+  const answer = async (invitation: GroupInvitation, accept: boolean) => {
+    setAnswering(invitation.id);
+    try {
+      if (accept) {
+        await acceptInvitation(invitation.id);
+        notifications.show({ color: "green", message: `You joined ${invitation.groupName}.` });
+      } else {
+        await declineInvitation(invitation.id);
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [STUDY_GROUP_INVITATIONS_QUERY_KEY] }),
+        queryClient.invalidateQueries({ queryKey: [STUDY_GROUPS_QUERY_KEY] }),
+      ]);
+    } catch (error) {
+      notifyError(error, "Could not answer that invitation.");
+    }
+    setAnswering(null);
+  };
 
-	// Modals state
-	const [showCreateModal, setShowCreateModal] = useState(false);
-	const [newGroupName, setNewGroupName] = useState("");
-	const [newGroupDesc, setNewGroupDesc] = useState("");
-	const [newGroupCategory, setNewGroupCategory] = useState("Tech & IT");
+  if (!userId) {
+    return (
+      <AppLayout active="groups">
+        <div className="gp-page">
+          <div className="gp-empty-state">
+            <Users size={32} aria-hidden="true" />
+            <h3>Study together</h3>
+            <p>Sign in to create study groups, invite friends, and study the same sets.</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
-	const [showShareModal, setShowShareModal] = useState(false);
+  return (
+    <AppLayout active="groups">
+      <div className="gp-page">
+        <div className="gp-header">
+          <div>
+            <h1 className="gp-title">Study Groups</h1>
+            <p className="gp-subtitle">Invite friends and study the same sets together.</p>
+          </div>
+          <button type="button" className="gp-create-btn" onClick={() => setShowCreateModal(true)}>
+            <Plus size={16} aria-hidden="true" />
+            <span>Create Group</span>
+          </button>
+        </div>
 
-	const filteredGroups = useMemo(() => {
-		return groups.filter((g) => {
-			const matchesTab = tab === "my" ? g.isMember : true;
-			const matchesSearch =
-				g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				g.description.toLowerCase().includes(searchQuery.toLowerCase());
-			return matchesTab && matchesSearch;
-		});
-	}, [groups, tab, searchQuery]);
+        {invitations.data && invitations.data.length > 0 && (
+          <section className="gp-invitations" aria-labelledby="gp-invitations-title">
+            <h2 id="gp-invitations-title">
+              <Mail size={16} aria-hidden="true" /> Invitations
+            </h2>
+            {invitations.data.map((invitation) => (
+              <div key={invitation.id} className="gp-invitation-row">
+                <div>
+                  <strong>{invitation.groupName}</strong>
+                  <span>
+                    {invitation.inviterName ? `Invited by ${invitation.inviterName} · ` : ""}
+                    {invitation.memberCount} {invitation.memberCount === 1 ? "member" : "members"}
+                  </span>
+                </div>
+                <div className="gp-invitation-actions">
+                  <button
+                    type="button"
+                    className="gp-action-btn outline sm"
+                    disabled={answering === invitation.id}
+                    onClick={() => void answer(invitation, false)}
+                  >
+                    <X size={14} aria-hidden="true" /> Decline
+                  </button>
+                  <button
+                    type="button"
+                    className="gp-action-btn primary sm"
+                    disabled={answering === invitation.id}
+                    onClick={() => void answer(invitation, true)}
+                  >
+                    <Check size={14} aria-hidden="true" /> Join
+                  </button>
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
 
-	const handleCreateSubmit = async (e: FormEvent) => {
-		e.preventDefault();
-		if (!newGroupName.trim()) return;
+        {groups.isError ? (
+          <p className="gp-message" role="alert">Could not load your study groups. Refresh to try again.</p>
+        ) : groups.isPending ? (
+          <p className="gp-message">Loading…</p>
+        ) : groups.data.length > 0 ? (
+          <div className="gp-grid">
+            {groups.data.map((group) => (
+              <Link
+                key={group.id}
+                to="/groups/$groupId"
+                params={{ groupId: String(group.id) }}
+                className="gp-card"
+              >
+                <div className="gp-card-top">
+                  {group.ownerId === userId ? (
+                    <span className="gp-member-pill">
+                      <Crown size={12} aria-hidden="true" /> Owner
+                    </span>
+                  ) : (
+                    <span className="gp-badge">Owned by {group.ownerName}</span>
+                  )}
+                  <span className="gp-members-count">
+                    <Users size={13} aria-hidden="true" /> {group.memberCount}
+                  </span>
+                </div>
+                <h3 className="gp-card-name">{group.name}</h3>
+                {group.description && <p className="gp-card-desc">{group.description}</p>}
+                <div className="gp-card-foot">
+                  <span>
+                    {group.setCount} shared {group.setCount === 1 ? "set" : "sets"}
+                  </span>
+                  <ChevronRight size={16} className="gp-chevron" aria-hidden="true" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="gp-empty-state">
+            <Users size={32} aria-hidden="true" />
+            <h3>No study groups yet</h3>
+            <p>Create a group, invite friends by username, and share sets to study together.</p>
+            <button type="button" className="gp-create-btn" onClick={() => setShowCreateModal(true)}>
+              <Plus size={16} aria-hidden="true" /> Create your first group
+            </button>
+          </div>
+        )}
 
-		await onCreateGroup?.({
-			name: newGroupName.trim(),
-			description: newGroupDesc.trim(),
-			category: newGroupCategory,
-		});
+        {showCreateModal && (
+          <CreateGroupModal
+            onClose={() => setShowCreateModal(false)}
+            onCreated={(groupId) => {
+              void queryClient.invalidateQueries({ queryKey: [STUDY_GROUPS_QUERY_KEY] });
+              void navigate({ to: "/groups/$groupId", params: { groupId: String(groupId) } });
+            }}
+          />
+        )}
+      </div>
+    </AppLayout>
+  );
+}
 
-		setNewGroupName("");
-		setNewGroupDesc("");
-		setShowCreateModal(false);
-	};
+function CreateGroupModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (groupId: number) => void;
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
 
-	return (
-		<AppLayout active="groups" onNavigate={onNavigate} {...layoutProps}>
-			<PageLayout size={1100} gap={20}>
-				{selectedGroup ? (
-					<Stack gap={20}>
-						<Group justify="space-between" gap={16}>
-							<Button
-								variant="default"
-								onClick={() => setSelectedGroup(null)}
-								leftSection={<ArrowLeft size={16} aria-hidden="true" />}
-							>
-								Back to groups
-							</Button>
-							<Group gap={8}>
-								{selectedGroup.isMember ? (
-									<>
-										<Button
-											onClick={() => setShowShareModal(true)}
-											leftSection={<Share2 size={15} aria-hidden="true" />}
-										>
-											Share set
-										</Button>
-										<Button
-											variant="default"
-											onClick={() => {
-												onLeaveGroup?.(selectedGroup.id);
-												setSelectedGroup({
-													...selectedGroup,
-													isMember: false,
-													memberCount: selectedGroup.memberCount - 1,
-												});
-											}}
-										>
-											Leave group
-										</Button>
-									</>
-								) : (
-									<Button
-										onClick={() => {
-											onJoinGroup?.(selectedGroup.id);
-											setSelectedGroup({
-												...selectedGroup,
-												isMember: true,
-												memberCount: selectedGroup.memberCount + 1,
-											});
-										}}
-										leftSection={<UserPlus size={15} aria-hidden="true" />}
-									>
-										Join group
-									</Button>
-								)}
-							</Group>
-						</Group>
-						<Paper withBorder radius={12} p={24}>
-							<Stack gap={8}>
-								<Badge variant="default" w="fit-content">
-									{selectedGroup.category}
-								</Badge>
-								<Title order={1} size={22}>
-									{selectedGroup.name}
-								</Title>
-								<Text c="dimmed">{selectedGroup.description}</Text>
-								<Group gap={8} mt={4} c="dimmed" fz={12}>
-									<Users size={15} aria-hidden="true" />
-									<span>{selectedGroup.memberCount} members</span>
-									<span>•</span>
-									<span>{selectedGroup.sharedSets.length} shared sets</span>
-								</Group>
-							</Stack>
-						</Paper>
-						<Grid gap={20}>
-							<Grid.Col span={{ base: 12, sm: 8 }}>
-								<Paper withBorder radius={12} p={20}>
-									<Stack gap={12}>
-										<Title order={2} size={16}>
-											Shared Flashcard Sets
-										</Title>
-										{selectedGroup.sharedSets.length > 0 ? (
-											<Stack gap={10}>
-												{selectedGroup.sharedSets.map((set) => (
-													<Paper key={set.id} withBorder p={12} bg="var(--bg)">
-														<Stack gap={6}>
-															<Text fw={600}>{set.name}</Text>
-															<Group
-																justify="space-between"
-																gap={8}
-																c="dimmed"
-																fz={12}
-															>
-																<span>{cardLabel(set.cardCount)}</span>
-																<span>Shared by {set.sharedBy}</span>
-															</Group>
-														</Stack>
-													</Paper>
-												))}
-											</Stack>
-										) : (
-											<Stack
-												align="center"
-												gap={8}
-												p={30}
-												ta="center"
-												c="dimmed"
-											>
-												<Layers size={24} aria-hidden="true" />
-												<Text>No sets shared in this group yet.</Text>
-												{selectedGroup.isMember && (
-													<Button
-														variant="transparent"
-														onClick={() => setShowShareModal(true)}
-													>
-														Share your first set
-													</Button>
-												)}
-											</Stack>
-										)}
-									</Stack>
-								</Paper>
-							</Grid.Col>
-							<Grid.Col span={{ base: 12, sm: 4 }}>
-								<Paper withBorder radius={12} p={20}>
-									<Stack gap={12}>
-										<Title order={2} size={16}>
-											Members
-										</Title>
-										<Stack gap={8}>
-											{selectedGroup.members.map((m) => (
-												<Group key={m.id} gap={10} py={6}>
-													<Avatar size={28} color="flashcardz" radius="xl">
-														{m.name.charAt(0)}
-													</Avatar>
-													<Text size="sm" fw={500}>
-														{m.name}
-													</Text>
-												</Group>
-											))}
-										</Stack>
-									</Stack>
-								</Paper>
-							</Grid.Col>
-						</Grid>
-					</Stack>
-				) : (
-					<Stack gap={20}>
-						<Group justify="space-between" align="flex-start" gap={16}>
-							<Stack gap={4}>
-								<Title order={1}>Study Groups</Title>
-								<Text c="dimmed">
-									Connect with peers, collaborate, and share flashcard sets
-									together.
-								</Text>
-							</Stack>
-							<Button
-								onClick={() => setShowCreateModal(true)}
-								leftSection={<Plus size={16} aria-hidden="true" />}
-							>
-								Create Group
-							</Button>
-						</Group>
-						<Tabs
-							value={tab}
-							onChange={(value) => setTab(value as "my" | "discover")}
-							variant="pills"
-						>
-							<Group justify="space-between" gap={16} mt={4}>
-								<Tabs.List aria-label="Study groups">
-									<Tabs.Tab value="my">My Groups</Tabs.Tab>
-									<Tabs.Tab value="discover">Discover All</Tabs.Tab>
-								</Tabs.List>
-								<TextInput
-									type="search"
-									aria-label="Search groups"
-									placeholder="Search groups..."
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-									leftSection={<Search size={16} aria-hidden="true" />}
-									w={{ base: "100%", xs: 280 }}
-								/>
-							</Group>
-							<Tabs.Panel value={tab} pt={20}>
-								{filteredGroups.length > 0 ? (
-									<SimpleGrid minColWidth="min(100%, 320px)" spacing={16}>
-										{filteredGroups.map((group) => (
-											<Paper
-												component="button"
-												type="button"
-												withBorder
-												key={group.id}
-												className="gp-card"
-												onClick={() => setSelectedGroup(group)}
-											>
-												<Group justify="space-between" gap={8}>
-													<Badge variant="default">{group.category}</Badge>
-													{group.isMember ? (
-														<Badge
-															color="teal"
-															variant="light"
-															leftSection={
-																<UserCheck size={12} aria-hidden="true" />
-															}
-														>
-															Member
-														</Badge>
-													) : (
-														<Group component="span" gap={4} c="dimmed" fz={12}>
-															<Users size={13} aria-hidden="true" />
-															{group.memberCount}
-														</Group>
-													)}
-												</Group>
-												<Title order={3}>{group.name}</Title>
-												<Text c="dimmed" size="sm" lineClamp={2}>
-													{group.description}
-												</Text>
-												<Group
-													justify="space-between"
-													mt="auto"
-													pt={10}
-													c="dimmed"
-													fz={12}
-													style={{ borderTop: "1px solid var(--border)" }}
-												>
-													<span>{group.sharedSets.length} shared sets</span>
-													<ChevronRight size={16} aria-hidden="true" />
-												</Group>
-											</Paper>
-										))}
-									</SimpleGrid>
-								) : (
-									<Paper withBorder radius={12} px={20} py={60}>
-										<Stack align="center" gap={10} ta="center" c="dimmed">
-											<Users size={32} aria-hidden="true" />
-											<Title order={2} c="var(--text)">
-												No study groups found
-											</Title>
-											<Text>
-												{tab === "my"
-													? "You haven't joined any groups yet. Explore the 'Discover All' tab to find communities!"
-													: "No groups match your search criteria."}
-											</Text>
-											{tab === "my" && (
-												<Button onClick={() => setTab("discover")}>
-													Discover groups
-												</Button>
-											)}
-										</Stack>
-									</Paper>
-								)}
-							</Tabs.Panel>
-						</Tabs>
-					</Stack>
-				)}
-				<Modal
-					opened={showCreateModal}
-					onClose={() => setShowCreateModal(false)}
-					title="Create Study Group"
-					size={440}
-				>
-					<Stack component="form" onSubmit={handleCreateSubmit} gap={14}>
-						<TextInput
-							data-autofocus
-							label="Group Name"
-							placeholder="e.g., Advanced Calculus Study Circle"
-							value={newGroupName}
-							onChange={(e) => setNewGroupName(e.target.value)}
-							required
-						/>
-						<Textarea
-							label="Description"
-							placeholder="What will members focus on in this group?"
-							value={newGroupDesc}
-							onChange={(e) => setNewGroupDesc(e.target.value)}
-							rows={3}
-						/>
-						<NativeSelect
-							label="Category"
-							value={newGroupCategory}
-							onChange={(e) => setNewGroupCategory(e.target.value)}
-							data={[
-								"Tech & IT",
-								"Science",
-								"Languages",
-								"Humanities",
-								"Math",
-								"Other",
-							]}
-						/>
-						<Group justify="flex-end" gap={8} mt={4}>
-							<Button
-								variant="default"
-								onClick={() => setShowCreateModal(false)}
-							>
-								Cancel
-							</Button>
-							<Button type="submit">Create group</Button>
-						</Group>
-					</Stack>
-				</Modal>
-				<Modal
-					opened={showShareModal && !!selectedGroup}
-					onClose={() => setShowShareModal(false)}
-					title={`Share Set to ${selectedGroup?.name ?? ""}`}
-					size={440}
-				>
-					{selectedGroup &&
-						(mySets.length > 0 ? (
-							<ScrollArea.Autosize mah={260}>
-								<Stack gap={8}>
-									{mySets.map((set) => (
-										<Paper key={set.id} withBorder p={12} bg="var(--bg)">
-											<Group justify="space-between" gap={12}>
-												<Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-													<Text fw={600}>{set.name}</Text>
-													<Text c="dimmed" size="xs">
-														{cardLabel(set.cardCount)}
-													</Text>
-												</Stack>
-												<Button
-													onClick={() => {
-														onShareSet?.(selectedGroup.id, set);
-														setShowShareModal(false);
-													}}
-												>
-													Share
-												</Button>
-											</Group>
-										</Paper>
-									))}
-								</Stack>
-							</ScrollArea.Autosize>
-						) : (
-							<Stack align="center" p={30} gap={8} ta="center" c="dimmed">
-								<Text>You have no personal sets created yet to share.</Text>
-								<Button
-									variant="transparent"
-									onClick={() => {
-										setShowShareModal(false);
-										void routerNavigate({ to: "/create" });
-									}}
-								>
-									Create a set now
-								</Button>
-							</Stack>
-						))}
-				</Modal>
-			</PageLayout>
-		</AppLayout>
-	);
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      onCreated(await createGroup(name.trim(), description.trim()));
+    } catch (error) {
+      notifyError(error, "Could not create the study group.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <GroupModal title="Create Study Group" onClose={onClose}>
+        <form onSubmit={(e) => void submit(e)} className="gp-modal-form">
+          <div className="gp-field">
+            <label htmlFor="gp-group-name">Group name</label>
+            <input
+              id="gp-group-name"
+              type="text"
+              placeholder="e.g., Biology 101 study circle"
+              value={name}
+              maxLength={255}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="gp-field">
+            <label htmlFor="gp-group-description">Description</label>
+            <textarea
+              id="gp-group-description"
+              placeholder="What will members focus on in this group?"
+              value={description}
+              maxLength={1000}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="gp-modal-actions">
+            <button type="button" className="gp-action-btn outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="gp-action-btn primary" disabled={saving}>
+              {saving ? "Creating…" : "Create group"}
+            </button>
+          </div>
+        </form>
+    </GroupModal>
+  );
 }

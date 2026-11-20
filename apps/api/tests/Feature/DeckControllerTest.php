@@ -193,10 +193,10 @@ class DeckControllerTest extends PostgresTestCase
         $public = Deck::factory()->for($owner)->public()->create();
         $private = Deck::factory()->for($owner)->create();
 
-        $this->getJson("/api/decks/{$public->id}")->assertOk()->assertJsonPath('id', $public->id);
+        $this->getJson("/api/decks/{$public->id}")->assertOk()->assertJsonPath('id', $public->id)->assertJsonPath('can_study', false);
         $this->getJson("/api/decks/{$private->id}")->assertNotFound();
         $this->actingAs($this->createUser())->getJson("/api/decks/{$private->id}")->assertNotFound();
-        $this->actingAs($owner)->getJson("/api/decks/{$private->id}")->assertOk();
+        $this->actingAs($owner)->getJson("/api/decks/{$private->id}")->assertOk()->assertJsonPath('can_study', true);
     }
 
     public function test_invalid_optional_token_still_allows_public_reads(): void

@@ -13,10 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CreateRouteImport } from './routes/create'
-import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as GroupsIndexRouteImport } from './routes/groups.index'
+import { Route as GroupsGroupIdRouteImport } from './routes/groups.$groupId'
 import { Route as SetsSetIdIndexRouteImport } from './routes/sets.$setId.index'
 import { Route as SetsSetIdEditRouteImport } from './routes/sets.$setId.edit'
 import { Route as SetsSetIdStudyRouteImport } from './routes/sets.$setId.study'
@@ -41,11 +42,6 @@ const CreateRoute = CreateRouteImport.update({
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GroupsRoute = GroupsRouteImport.update({
-  id: '/groups',
-  path: '/groups',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -59,6 +55,16 @@ const SearchRoute = SearchRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsIndexRoute = GroupsIndexRouteImport.update({
+  id: '/groups/',
+  path: '/groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
+  id: '/groups/$groupId',
+  path: '/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetsSetIdIndexRoute = SetsSetIdIndexRouteImport.update({
@@ -82,10 +88,11 @@ export interface FileRoutesByFullPath {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
-  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/groups/': typeof GroupsIndexRoute
   '/sets/$setId/edit': typeof SetsSetIdEditRoute
   '/sets/$setId/study': typeof SetsSetIdStudyRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
@@ -95,10 +102,11 @@ export interface FileRoutesByTo {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
-  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/groups': typeof GroupsIndexRoute
   '/sets/$setId/edit': typeof SetsSetIdEditRoute
   '/sets/$setId/study': typeof SetsSetIdStudyRoute
   '/sets/$setId': typeof SetsSetIdIndexRoute
@@ -109,10 +117,11 @@ export interface FileRoutesById {
   '/auth-callback': typeof AuthCallbackRoute
   '/community': typeof CommunityRoute
   '/create': typeof CreateRoute
-  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/groups/': typeof GroupsIndexRoute
   '/sets/$setId/edit': typeof SetsSetIdEditRoute
   '/sets/$setId/study': typeof SetsSetIdStudyRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
@@ -124,10 +133,11 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/community'
     | '/create'
-    | '/groups'
     | '/login'
     | '/search'
     | '/signup'
+    | '/groups/$groupId'
+    | '/groups/'
     | '/sets/$setId/edit'
     | '/sets/$setId/study'
     | '/sets/$setId/'
@@ -137,10 +147,11 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/community'
     | '/create'
-    | '/groups'
     | '/login'
     | '/search'
     | '/signup'
+    | '/groups/$groupId'
+    | '/groups'
     | '/sets/$setId/edit'
     | '/sets/$setId/study'
     | '/sets/$setId'
@@ -150,10 +161,11 @@ export interface FileRouteTypes {
     | '/auth-callback'
     | '/community'
     | '/create'
-    | '/groups'
     | '/login'
     | '/search'
     | '/signup'
+    | '/groups/$groupId'
+    | '/groups/'
     | '/sets/$setId/edit'
     | '/sets/$setId/study'
     | '/sets/$setId/'
@@ -164,10 +176,11 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   CommunityRoute: typeof CommunityRoute
   CreateRoute: typeof CreateRoute
-  GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
+  GroupsGroupIdRoute: typeof GroupsGroupIdRoute
+  GroupsIndexRoute: typeof GroupsIndexRoute
   SetsSetIdEditRoute: typeof SetsSetIdEditRoute
   SetsSetIdStudyRoute: typeof SetsSetIdStudyRoute
   SetsSetIdIndexRoute: typeof SetsSetIdIndexRoute
@@ -203,13 +216,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/groups': {
-      id: '/groups'
-      path: '/groups'
-      fullPath: '/groups'
-      preLoaderRoute: typeof GroupsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -229,6 +235,20 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups/': {
+      id: '/groups/'
+      path: '/groups'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof GroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups/$groupId': {
+      id: '/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof GroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sets/$setId/': {
@@ -260,10 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   CommunityRoute: CommunityRoute,
   CreateRoute: CreateRoute,
-  GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  GroupsGroupIdRoute: GroupsGroupIdRoute,
+  GroupsIndexRoute: GroupsIndexRoute,
   SetsSetIdEditRoute: SetsSetIdEditRoute,
   SetsSetIdStudyRoute: SetsSetIdStudyRoute,
   SetsSetIdIndexRoute: SetsSetIdIndexRoute,

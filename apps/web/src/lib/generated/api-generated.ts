@@ -181,6 +181,45 @@ export interface StoreReviewRequest {
   difficulty?: string;
 }
 
+export interface StoreStudyGroupInvitationRequest {
+  /** @maxLength 29 */
+  username: string;
+}
+
+export interface StoreStudyGroupRequest {
+  /** @maxLength 255 */
+  name: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  description?: string | null;
+}
+
+export interface StudyGroup {
+  id: number;
+  owner_id: string;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+}
+
+export interface StudyGroupInvitation {
+  id: number;
+  study_group_id: number;
+  /** @nullable */
+  inviter_id: string | null;
+  invitee_id: string;
+  /** @nullable */
+  created_at: string | null;
+  /** @nullable */
+  updated_at: string | null;
+}
+
 export interface UpdateCardRequest {
   content?: string;
   deck_id?: number;
@@ -195,6 +234,16 @@ export interface UpdateDeckRequest {
      */
   description?: string | null;
   is_public?: boolean;
+}
+
+export interface UpdateStudyGroupRequest {
+  /** @maxLength 255 */
+  name?: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  description?: string | null;
 }
 
 export interface User {
@@ -341,10 +390,74 @@ timezone?: string;
 deck_id?: number;
 };
 
+export type StudyGroupsIndex200Links = {[key: string]: unknown};
+
+export type StudyGroupsIndex200 = {
+  current_page: number;
+  data: string;
+  first_page_url: string;
+  /** @nullable */
+  from: number | null;
+  last_page: string;
+  last_page_url: string;
+  links: StudyGroupsIndex200Links;
+  next_page_url: string;
+  /** @nullable */
+  path: string | null;
+  per_page: number;
+  /** @nullable */
+  prev_page_url: string | null;
+  /** @nullable */
+  to: number | null;
+  total: string;
+};
+
+export type StudyGroupsDecksStoreBody = {
+  /** @minimum 1 */
+  deck_id: number;
+};
+
+export type StudyGroupInvitationsIndex200Links = {[key: string]: unknown};
+
+export type StudyGroupInvitationsIndex200 = {
+  current_page: number;
+  data: string;
+  first_page_url: string;
+  /** @nullable */
+  from: number | null;
+  last_page: string;
+  last_page_url: string;
+  links: StudyGroupInvitationsIndex200Links;
+  next_page_url: string;
+  /** @nullable */
+  path: string | null;
+  per_page: number;
+  /** @nullable */
+  prev_page_url: string | null;
+  /** @nullable */
+  to: number | null;
+  total: string;
+};
+
 export type ExampleOptionalAuth200 = {
   message: 'User not authenticated, but still returning this. This is intentional to show off two different things.';
 } | {
   message: 'User authenticated';
+};
+
+export type UsersSearchParams = {
+/**
+ * @maxLength 29
+ */
+username: string;
+/**
+ * @minimum 1
+ */
+study_group_id?: number;
+};
+
+export type UsersSearch200 = {
+  data: string[];
 };
 
 export type cardsIndexResponse200 = {
@@ -933,7 +1046,7 @@ const res = await fetch(getDecksStoreUrl(),
 
 
 export type decksShowResponse200 = {
-  data: Deck
+  data: unknown[]
   status: 200
 }
 
@@ -964,6 +1077,9 @@ export const getDecksShowUrl = (deck: number,) => {
   return `/api/decks/${deck}`
 }
 
+/**
+ * @summary Show a set, including whether the viewer can study it (they own it or it is shared with one of their study groups)
+ */
 export const decksShow = async (deck: number, options?: RequestInit): Promise<decksShowResponse> => {
 
   const res = await fetch(getDecksShowUrl(deck),
@@ -1557,6 +1673,836 @@ export const reviewsUndo = async (review: number, options?: RequestInit): Promis
 
 
 
+export type studyGroupsIndexResponse200 = {
+  data: StudyGroupsIndex200
+  status: 200
+}
+
+export type studyGroupsIndexResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsIndexResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsIndexResponseSuccess = (studyGroupsIndexResponse200) & {
+  headers: Headers;
+};
+export type studyGroupsIndexResponseError = (studyGroupsIndexResponse401 | studyGroupsIndexResponse403) & {
+  headers: Headers;
+};
+
+export type studyGroupsIndexResponse = (studyGroupsIndexResponseSuccess | studyGroupsIndexResponseError)
+
+export const getStudyGroupsIndexUrl = () => {
+
+
+
+
+  return `/api/study-groups`
+}
+
+/**
+ * @summary List the study groups the user belongs to
+ */
+export const studyGroupsIndex = async ( options?: RequestInit): Promise<studyGroupsIndexResponse> => {
+
+  const res = await fetch(getStudyGroupsIndexUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsIndexResponse
+}
+
+
+
+export type studyGroupsStoreResponse201 = {
+  data: StudyGroup
+  status: 201
+}
+
+export type studyGroupsStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type studyGroupsStoreResponseSuccess = (studyGroupsStoreResponse201) & {
+  headers: Headers;
+};
+export type studyGroupsStoreResponseError = (studyGroupsStoreResponse401 | studyGroupsStoreResponse403 | studyGroupsStoreResponse422) & {
+  headers: Headers;
+};
+
+export type studyGroupsStoreResponse = (studyGroupsStoreResponseSuccess | studyGroupsStoreResponseError)
+
+export const getStudyGroupsStoreUrl = () => {
+
+
+
+
+  return `/api/study-groups`
+}
+
+export const studyGroupsStore = async (storeStudyGroupRequest: StoreStudyGroupRequest, options?: RequestInit): Promise<studyGroupsStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getStudyGroupsStoreUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(storeStudyGroupRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsStoreResponse
+}
+
+
+
+export type studyGroupsShowResponse200 = {
+  data: StudyGroup
+  status: 200
+}
+
+export type studyGroupsShowResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsShowResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsShowResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsShowResponseSuccess = (studyGroupsShowResponse200) & {
+  headers: Headers;
+};
+export type studyGroupsShowResponseError = (studyGroupsShowResponse401 | studyGroupsShowResponse403 | studyGroupsShowResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupsShowResponse = (studyGroupsShowResponseSuccess | studyGroupsShowResponseError)
+
+export const getStudyGroupsShowUrl = (studyGroup: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}`
+}
+
+/**
+ * @summary Show a group with its members, shared sets, and pending invitations
+ */
+export const studyGroupsShow = async (studyGroup: number, options?: RequestInit): Promise<studyGroupsShowResponse> => {
+
+  const res = await fetch(getStudyGroupsShowUrl(studyGroup),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsShowResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsShowResponse
+}
+
+
+
+export type studyGroupsUpdateResponse200 = {
+  data: StudyGroup
+  status: 200
+}
+
+export type studyGroupsUpdateResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsUpdateResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsUpdateResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsUpdateResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type studyGroupsUpdateResponseSuccess = (studyGroupsUpdateResponse200) & {
+  headers: Headers;
+};
+export type studyGroupsUpdateResponseError = (studyGroupsUpdateResponse401 | studyGroupsUpdateResponse403 | studyGroupsUpdateResponse404 | studyGroupsUpdateResponse422) & {
+  headers: Headers;
+};
+
+export type studyGroupsUpdateResponse = (studyGroupsUpdateResponseSuccess | studyGroupsUpdateResponseError)
+
+export const getStudyGroupsUpdateUrl = (studyGroup: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}`
+}
+
+export const studyGroupsUpdate = async (studyGroup: number,
+    updateStudyGroupRequest?: UpdateStudyGroupRequest, options?: RequestInit): Promise<studyGroupsUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getStudyGroupsUpdateUrl(studyGroup),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateStudyGroupRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsUpdateResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsUpdateResponse
+}
+
+
+
+export type studyGroupsDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type studyGroupsDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsDestroyResponseSuccess = (studyGroupsDestroyResponse204) & {
+  headers: Headers;
+};
+export type studyGroupsDestroyResponseError = (studyGroupsDestroyResponse401 | studyGroupsDestroyResponse403 | studyGroupsDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupsDestroyResponse = (studyGroupsDestroyResponseSuccess | studyGroupsDestroyResponseError)
+
+export const getStudyGroupsDestroyUrl = (studyGroup: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}`
+}
+
+export const studyGroupsDestroy = async (studyGroup: number, options?: RequestInit): Promise<studyGroupsDestroyResponse> => {
+
+  const res = await fetch(getStudyGroupsDestroyUrl(studyGroup),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as studyGroupsDestroyResponse
+}
+
+
+
+export type studyGroupsDecksStoreResponse201 = {
+  data: Deck
+  status: 201
+}
+
+export type studyGroupsDecksStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsDecksStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsDecksStoreResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsDecksStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type studyGroupsDecksStoreResponseSuccess = (studyGroupsDecksStoreResponse201) & {
+  headers: Headers;
+};
+export type studyGroupsDecksStoreResponseError = (studyGroupsDecksStoreResponse401 | studyGroupsDecksStoreResponse403 | studyGroupsDecksStoreResponse404 | studyGroupsDecksStoreResponse422) & {
+  headers: Headers;
+};
+
+export type studyGroupsDecksStoreResponse = (studyGroupsDecksStoreResponseSuccess | studyGroupsDecksStoreResponseError)
+
+export const getStudyGroupsDecksStoreUrl = (studyGroup: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}/decks`
+}
+
+/**
+ * @summary Share a set with the group so every member can study it
+ */
+export const studyGroupsDecksStore = async (studyGroup: number,
+    studyGroupsDecksStoreBody: StudyGroupsDecksStoreBody, options?: RequestInit): Promise<studyGroupsDecksStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getStudyGroupsDecksStoreUrl(studyGroup),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(studyGroupsDecksStoreBody)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsDecksStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsDecksStoreResponse
+}
+
+
+
+export type studyGroupsDecksDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type studyGroupsDecksDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsDecksDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsDecksDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsDecksDestroyResponseSuccess = (studyGroupsDecksDestroyResponse204) & {
+  headers: Headers;
+};
+export type studyGroupsDecksDestroyResponseError = (studyGroupsDecksDestroyResponse401 | studyGroupsDecksDestroyResponse403 | studyGroupsDecksDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupsDecksDestroyResponse = (studyGroupsDecksDestroyResponseSuccess | studyGroupsDecksDestroyResponseError)
+
+export const getStudyGroupsDecksDestroyUrl = (studyGroup: number,
+    deck: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}/decks/${deck}`
+}
+
+export const studyGroupsDecksDestroy = async (studyGroup: number,
+    deck: number, options?: RequestInit): Promise<studyGroupsDecksDestroyResponse> => {
+
+  const res = await fetch(getStudyGroupsDecksDestroyUrl(studyGroup,deck),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsDecksDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as studyGroupsDecksDestroyResponse
+}
+
+
+
+export type studyGroupsInvitationsStoreResponse201 = {
+  data: StudyGroupInvitation
+  status: 201
+}
+
+export type studyGroupsInvitationsStoreResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsInvitationsStoreResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsInvitationsStoreResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsInvitationsStoreResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type studyGroupsInvitationsStoreResponseSuccess = (studyGroupsInvitationsStoreResponse201) & {
+  headers: Headers;
+};
+export type studyGroupsInvitationsStoreResponseError = (studyGroupsInvitationsStoreResponse401 | studyGroupsInvitationsStoreResponse403 | studyGroupsInvitationsStoreResponse404 | studyGroupsInvitationsStoreResponse422) & {
+  headers: Headers;
+};
+
+export type studyGroupsInvitationsStoreResponse = (studyGroupsInvitationsStoreResponseSuccess | studyGroupsInvitationsStoreResponseError)
+
+export const getStudyGroupsInvitationsStoreUrl = (studyGroup: number,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}/invitations`
+}
+
+/**
+ * @summary Invite a user to the group by their username
+ */
+export const studyGroupsInvitationsStore = async (studyGroup: number,
+    storeStudyGroupInvitationRequest: StoreStudyGroupInvitationRequest, options?: RequestInit): Promise<studyGroupsInvitationsStoreResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getStudyGroupsInvitationsStoreUrl(studyGroup),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(storeStudyGroupInvitationRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsInvitationsStoreResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupsInvitationsStoreResponse
+}
+
+
+
+export type studyGroupInvitationsIndexResponse200 = {
+  data: StudyGroupInvitationsIndex200
+  status: 200
+}
+
+export type studyGroupInvitationsIndexResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupInvitationsIndexResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupInvitationsIndexResponseSuccess = (studyGroupInvitationsIndexResponse200) & {
+  headers: Headers;
+};
+export type studyGroupInvitationsIndexResponseError = (studyGroupInvitationsIndexResponse401 | studyGroupInvitationsIndexResponse403) & {
+  headers: Headers;
+};
+
+export type studyGroupInvitationsIndexResponse = (studyGroupInvitationsIndexResponseSuccess | studyGroupInvitationsIndexResponseError)
+
+export const getStudyGroupInvitationsIndexUrl = () => {
+
+
+
+
+  return `/api/study-group-invitations`
+}
+
+/**
+ * @summary List the invitations waiting for the user to accept or decline
+ */
+export const studyGroupInvitationsIndex = async ( options?: RequestInit): Promise<studyGroupInvitationsIndexResponse> => {
+
+  const res = await fetch(getStudyGroupInvitationsIndexUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupInvitationsIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupInvitationsIndexResponse
+}
+
+
+
+export type studyGroupInvitationsAcceptResponse200 = {
+  data: StudyGroup
+  status: 200
+}
+
+export type studyGroupInvitationsAcceptResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupInvitationsAcceptResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupInvitationsAcceptResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupInvitationsAcceptResponseSuccess = (studyGroupInvitationsAcceptResponse200) & {
+  headers: Headers;
+};
+export type studyGroupInvitationsAcceptResponseError = (studyGroupInvitationsAcceptResponse401 | studyGroupInvitationsAcceptResponse403 | studyGroupInvitationsAcceptResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupInvitationsAcceptResponse = (studyGroupInvitationsAcceptResponseSuccess | studyGroupInvitationsAcceptResponseError)
+
+export const getStudyGroupInvitationsAcceptUrl = (invitation: number,) => {
+
+
+
+
+  return `/api/study-group-invitations/${invitation}/accept`
+}
+
+export const studyGroupInvitationsAccept = async (invitation: number, options?: RequestInit): Promise<studyGroupInvitationsAcceptResponse> => {
+
+  const res = await fetch(getStudyGroupInvitationsAcceptUrl(invitation),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupInvitationsAcceptResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as studyGroupInvitationsAcceptResponse
+}
+
+
+
+export type studyGroupInvitationsDeclineResponse204 = {
+  data: void
+  status: 204
+}
+
+export type studyGroupInvitationsDeclineResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupInvitationsDeclineResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupInvitationsDeclineResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupInvitationsDeclineResponseSuccess = (studyGroupInvitationsDeclineResponse204) & {
+  headers: Headers;
+};
+export type studyGroupInvitationsDeclineResponseError = (studyGroupInvitationsDeclineResponse401 | studyGroupInvitationsDeclineResponse403 | studyGroupInvitationsDeclineResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupInvitationsDeclineResponse = (studyGroupInvitationsDeclineResponseSuccess | studyGroupInvitationsDeclineResponseError)
+
+export const getStudyGroupInvitationsDeclineUrl = (invitation: number,) => {
+
+
+
+
+  return `/api/study-group-invitations/${invitation}/decline`
+}
+
+export const studyGroupInvitationsDecline = async (invitation: number, options?: RequestInit): Promise<studyGroupInvitationsDeclineResponse> => {
+
+  const res = await fetch(getStudyGroupInvitationsDeclineUrl(invitation),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupInvitationsDeclineResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as studyGroupInvitationsDeclineResponse
+}
+
+
+
+export type studyGroupInvitationsDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type studyGroupInvitationsDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupInvitationsDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupInvitationsDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupInvitationsDestroyResponseSuccess = (studyGroupInvitationsDestroyResponse204) & {
+  headers: Headers;
+};
+export type studyGroupInvitationsDestroyResponseError = (studyGroupInvitationsDestroyResponse401 | studyGroupInvitationsDestroyResponse403 | studyGroupInvitationsDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupInvitationsDestroyResponse = (studyGroupInvitationsDestroyResponseSuccess | studyGroupInvitationsDestroyResponseError)
+
+export const getStudyGroupInvitationsDestroyUrl = (invitation: number,) => {
+
+
+
+
+  return `/api/study-group-invitations/${invitation}`
+}
+
+/**
+ * @summary Cancel an invitation that has not been answered yet
+ */
+export const studyGroupInvitationsDestroy = async (invitation: number, options?: RequestInit): Promise<studyGroupInvitationsDestroyResponse> => {
+
+  const res = await fetch(getStudyGroupInvitationsDestroyUrl(invitation),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupInvitationsDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as studyGroupInvitationsDestroyResponse
+}
+
+
+
+export type studyGroupsMembersDestroyResponse204 = {
+  data: void
+  status: 204
+}
+
+export type studyGroupsMembersDestroyResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type studyGroupsMembersDestroyResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type studyGroupsMembersDestroyResponse404 = {
+  data: ModelNotFoundExceptionResponse
+  status: 404
+}
+
+export type studyGroupsMembersDestroyResponseSuccess = (studyGroupsMembersDestroyResponse204) & {
+  headers: Headers;
+};
+export type studyGroupsMembersDestroyResponseError = (studyGroupsMembersDestroyResponse401 | studyGroupsMembersDestroyResponse403 | studyGroupsMembersDestroyResponse404) & {
+  headers: Headers;
+};
+
+export type studyGroupsMembersDestroyResponse = (studyGroupsMembersDestroyResponseSuccess | studyGroupsMembersDestroyResponseError)
+
+export const getStudyGroupsMembersDestroyUrl = (studyGroup: number,
+    member: string,) => {
+
+
+
+
+  return `/api/study-groups/${studyGroup}/members/${member}`
+}
+
+/**
+ * @summary Remove a member from the group, or leave the group when the member is the current user
+ */
+export const studyGroupsMembersDestroy = async (studyGroup: number,
+    member: string, options?: RequestInit): Promise<studyGroupsMembersDestroyResponse> => {
+
+  const res = await fetch(getStudyGroupsMembersDestroyUrl(studyGroup,member),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: studyGroupsMembersDestroyResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as studyGroupsMembersDestroyResponse
+}
+
+
+
 export type userShowResponse200 = {
   data: User
   status: 200
@@ -1643,4 +2589,72 @@ export const exampleOptionalAuth = async ( options?: RequestInit): Promise<examp
 
   const data: exampleOptionalAuthResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as exampleOptionalAuthResponse
+}
+
+
+
+export type usersSearchResponse200 = {
+  data: UsersSearch200
+  status: 200
+}
+
+export type usersSearchResponse401 = {
+  data: AuthenticationExceptionResponse
+  status: 401
+}
+
+export type usersSearchResponse403 = {
+  data: AuthorizationExceptionResponse
+  status: 403
+}
+
+export type usersSearchResponse422 = {
+  data: ValidationExceptionResponse
+  status: 422
+}
+
+export type usersSearchResponseSuccess = (usersSearchResponse200) & {
+  headers: Headers;
+};
+export type usersSearchResponseError = (usersSearchResponse401 | usersSearchResponse403 | usersSearchResponse422) & {
+  headers: Headers;
+};
+
+export type usersSearchResponse = (usersSearchResponseSuccess | usersSearchResponseError)
+
+export const getUsersSearchUrl = (params: UsersSearchParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/users/search?${stringifiedParams}` : `/api/users/search`
+}
+
+/**
+ * @summary Find users whose username starts with the search text, so they can be invited to a study group.
+Passing a study group the user belongs to also says whether each result is already a member or invited
+ */
+export const usersSearch = async (params: UsersSearchParams, options?: RequestInit): Promise<usersSearchResponse> => {
+
+  const res = await fetch(getUsersSearchUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: usersSearchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as usersSearchResponse
 }

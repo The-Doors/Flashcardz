@@ -15,7 +15,7 @@ class DeckPolicy
 
     public function view(?User $user, Deck $deck): Response
     {
-        return ! $deck->trashed() && ($deck->is_public || $deck->user_id === $user?->id)
+        return ! $deck->trashed() && ($deck->is_public || ($user && $deck->isStudiableBy($user)))
             ? Response::allow()
             : Response::denyAsNotFound();
     }

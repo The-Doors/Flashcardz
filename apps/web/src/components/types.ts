@@ -39,28 +39,3 @@ export type CommunitySet = {
   studyCount: number;
   author: string;
 };
-
-export type GroupMember = {
-  id: number | string;
-  name: string;
-  avatarUrl?: string;
-};
-
-export type SharedGroupSet = {
-  id: number | string;
-  name: string;
-  cardCount: number;
-  sharedBy: string;
-  createdAt: string;
-};
-
-export type StudyGroup = {
-  id: number | string;
-  name: string;
-  description: string;
-  category: string;
-  memberCount: number;
-  isMember: boolean;
-  members: GroupMember[];
-  sharedSets: SharedGroupSet[];
-};

@@ -16,7 +16,7 @@ class ReviewPolicy
 
     public function create(User $user, Card $card): Response
     {
-        return ! $card->trashed() && $card->deck && ! $card->deck->trashed() && $card->deck->user_id === $user->id
+        return ! $card->trashed() && $card->deck && ! $card->deck->trashed() && $card->deck->isStudiableBy($user)
             ? Response::allow()
             : Response::denyAsNotFound();
     }

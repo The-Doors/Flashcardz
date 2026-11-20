@@ -25,7 +25,20 @@ import {
 	reviewsActivity,
 	reviewsIndex,
 	reviewsStore,
+	studyGroupInvitationsAccept,
+	studyGroupInvitationsDecline,
+	studyGroupInvitationsDestroy,
+	studyGroupInvitationsIndex,
+	studyGroupsDecksDestroy,
+	studyGroupsDecksStore,
+	studyGroupsDestroy,
+	studyGroupsIndex,
+	studyGroupsInvitationsStore,
+	studyGroupsMembersDestroy,
+	studyGroupsShow,
+	studyGroupsStore,
 	userShow,
+	usersSearch,
 } from "./generated/api-generated.ts";
 import { supabase } from "./supabase";
 
@@ -46,6 +59,8 @@ export type CardSides = { id: number; front: string; back: string };
 export type SetDetails = {
 	id: number;
 	ownerId: string;
+	/** True when the viewer owns the set or it is shared with one of their study groups. */
+	canStudy: boolean;
 	name: string;
 	description: string | null;
 	isPublic: boolean;
@@ -140,6 +155,7 @@ export async function loadSet(setId: number): Promise<SetDetails | null> {
 	return {
 		id: deck.data.id,
 		ownerId: deck.data.user_id,
+		canStudy: (deck.data as { can_study?: boolean }).can_study ?? false,
 		name: deck.data.name,
 		description: deck.data.description,
 		isPublic: deck.data.is_public,
@@ -429,6 +445,258 @@ export async function updateSet(
 export async function deleteSet(setId: number) {
 	const response = await decksDestroy(setId, await authorizedRequest());
 	throwUnlessStatus(response, 204, "Could not delete this set.");
+}
+
+/* ------------------------------------------------------------------ */
+/* Study groups                                                        */
+/* ------------------------------------------------------------------ */
+
+export const STUDY_GROUPS_QUERY_KEY = "study-groups";
+export const STUDY_GROUP_INVITATIONS_QUERY_KEY = "study-group-invitations";
+
+export type GroupSummary = {
+	id: number;
+	name: string;
+	description: string | null;
+	ownerId: string;
+	ownerName: string;
+	memberCount: number;
+	setCount: number;
+};
+
+export type GroupMember = { id: string; username: string };
+
+export type GroupSet = {
+	id: number;
+	name: string;
+	cardCount: number;
+	ownerId: string;
+	ownerName: string;
+	/** Null when the member who shared it has deleted their account. */
+	sharedById: string | null;
+};
+
+export type GroupDetails = {
+	id: number;
+	name: string;
+	description: string | null;
+	ownerId: string;
+	ownerName: string;
+	members: GroupMember[];
+	sets: GroupSet[];
+	/** Invitations that haven't been answered yet. */
+	invitations: { id: number; username: string }[];
+};
+
+export type GroupInvitation = {
+	id: number;
+	groupId: number;
+	groupName: string;
+	memberCount: number;
+	/** Null when the inviter has deleted their account. */
+	inviterName: string | null;
+};
+
+export type UserMatch = {
+	id: string;
+	username: string;
+	isMember: boolean;
+	isInvited: boolean;
+};
+
+type ApiUser = { id: string; username: string };
+
+// The generated types don't describe the related records the API includes.
+type ApiGroup = {
+	id: number;
+	name: string;
+	description: string | null;
+	owner_id: string;
+	owner: ApiUser;
+	members_count?: number;
+	decks_count?: number;
+	members?: ApiUser[];
+	decks?: (Deck & {
+		cards_count: number;
+		user: ApiUser;
+		pivot: { added_by_id: string | null };
+	})[];
+	invitations?: { id: number; invitee: ApiUser }[];
+};
+
+/** Turns any failed response into an error carrying the API's message when it has one. */
+function throwUnlessOk(
+	response: { status: number; data: unknown },
+	expectedStatus: number,
+	fallbackMessage: string,
+) {
+	if (response.status === expectedStatus) return;
+	const message = (response.data as { message?: string } | null)?.message;
+	throw new Error(
+		[403, 422].includes(response.status) && message ? message : fallbackMessage,
+	);
+}
+
+export async function listMyGroups(): Promise<GroupSummary[]> {
+	const response = await studyGroupsIndex(await authorizedRequest());
+	throwUnlessOk(response, 200, "Could not load your study groups.");
+	const page = response.data as unknown as { data: ApiGroup[] };
+	return page.data.map((group) => ({
+		id: group.id,
+		name: group.name,
+		description: group.description,
+		ownerId: group.owner_id,
+		ownerName: group.owner.username,
+		memberCount: group.members_count ?? 0,
+		setCount: group.decks_count ?? 0,
+	}));
+}
+
+/** Returns null when the group doesn't exist or the user isn't a member. */
+export async function loadGroup(groupId: number): Promise<GroupDetails | null> {
+	const response = await studyGroupsShow(groupId, await authorizedRequest());
+	if (Number(response.status) === 404) return null;
+	throwUnlessOk(response, 200, "Could not load this study group.");
+	const group = response.data as unknown as ApiGroup;
+	return {
+		id: group.id,
+		name: group.name,
+		description: group.description,
+		ownerId: group.owner_id,
+		ownerName: group.owner.username,
+		members: (group.members ?? []).map(({ id, username }) => ({
+			id,
+			username,
+		})),
+		sets: (group.decks ?? []).map((deck) => ({
+			id: deck.id,
+			name: deck.name,
+			cardCount: deck.cards_count,
+			ownerId: deck.user_id,
+			ownerName: deck.user.username,
+			sharedById: deck.pivot.added_by_id,
+		})),
+		invitations: (group.invitations ?? []).map((invitation) => ({
+			id: invitation.id,
+			username: invitation.invitee.username,
+		})),
+	};
+}
+
+/** Creates a group owned by the user and returns its id. */
+export async function createGroup(name: string, description: string) {
+	const response = await studyGroupsStore(
+		{ name, description: description || null },
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 201, "Could not create the study group.");
+	return (response.data as unknown as ApiGroup).id;
+}
+
+export async function deleteGroup(groupId: number) {
+	const response = await studyGroupsDestroy(groupId, await authorizedRequest());
+	throwUnlessOk(response, 204, "Could not delete the study group.");
+}
+
+/** Removes a member, or leaves the group when `userId` is the current user. */
+export async function removeGroupMember(groupId: number, userId: string) {
+	const response = await studyGroupsMembersDestroy(
+		groupId,
+		userId,
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 204, "Could not remove that member.");
+}
+
+export async function shareSetWithGroup(groupId: number, setId: number) {
+	const response = await studyGroupsDecksStore(
+		groupId,
+		{ deck_id: setId },
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 201, "Could not share that set.");
+}
+
+export async function unshareSetFromGroup(groupId: number, setId: number) {
+	const response = await studyGroupsDecksDestroy(
+		groupId,
+		setId,
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 204, "Could not remove that set from the group.");
+}
+
+/** Finds users whose username starts with `username`, marking who is already in or invited to the group. */
+export async function searchUsers(
+	username: string,
+	groupId: number,
+): Promise<UserMatch[]> {
+	const response = await usersSearch(
+		{ username, study_group_id: groupId },
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 200, "Could not search for users.");
+	const result = response.data as unknown as {
+		data: (ApiUser & { is_member: boolean; is_invited: boolean })[];
+	};
+	return result.data.map((user) => ({
+		id: user.id,
+		username: user.username,
+		isMember: user.is_member,
+		isInvited: user.is_invited,
+	}));
+}
+
+export async function inviteToGroup(groupId: number, username: string) {
+	const response = await studyGroupsInvitationsStore(
+		groupId,
+		{ username },
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 201, "Could not send that invitation.");
+}
+
+export async function cancelInvitation(invitationId: number) {
+	const response = await studyGroupInvitationsDestroy(
+		invitationId,
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 204, "Could not cancel that invitation.");
+}
+
+export async function listMyInvitations(): Promise<GroupInvitation[]> {
+	const response = await studyGroupInvitationsIndex(await authorizedRequest());
+	throwUnlessOk(response, 200, "Could not load your invitations.");
+	const page = response.data as unknown as {
+		data: {
+			id: number;
+			study_group: ApiGroup;
+			inviter: ApiUser | null;
+		}[];
+	};
+	return page.data.map((invitation) => ({
+		id: invitation.id,
+		groupId: invitation.study_group.id,
+		groupName: invitation.study_group.name,
+		memberCount: invitation.study_group.members_count ?? 0,
+		inviterName: invitation.inviter?.username ?? null,
+	}));
+}
+
+export async function acceptInvitation(invitationId: number) {
+	const response = await studyGroupInvitationsAccept(
+		invitationId,
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 200, "Could not accept that invitation.");
+}
+
+export async function declineInvitation(invitationId: number) {
+	const response = await studyGroupInvitationsDecline(
+		invitationId,
+		await authorizedRequest(),
+	);
+	throwUnlessOk(response, 204, "Could not decline that invitation.");
 }
 
 function fetchCurrentUser(accessToken: string) {

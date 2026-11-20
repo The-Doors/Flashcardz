@@ -57,60 +57,33 @@ export default function SetPage({ setId }: { setId: number }) {
 		};
 	}, [setId, userId]);
 
-	return (
-		<AppLayout active="home">
-			<PageLayout>
-				<Group justify="space-between" gap={16}>
-					<Button
-						variant="default"
-						renderRoot={(props) => <Link {...props} to="/" />}
-						leftSection={<ArrowLeft size={16} aria-hidden="true" />}
-					>
-						Back
-					</Button>
-					{set && userId && set.ownerId !== userId && (
-						<Button
-							type="button"
-							loading={copying}
-							onClick={() => void copyToMySets()}
-							leftSection={<Copy size={16} aria-hidden="true" />}
-						>
-							{copying ? "Copying…" : "Copy to my sets"}
-						</Button>
-					)}
-					{set && set.ownerId === userId && (
-						<Group gap={10}>
-							<Button
-								variant="default"
-								renderRoot={(props) => (
-									<Link
-										{...props}
-										to="/sets/$setId/edit"
-										params={{ setId: String(setId) }}
-									/>
-								)}
-								leftSection={<Pencil size={16} aria-hidden="true" />}
-							>
-								Edit
-							</Button>
-							{set.cards.length > 0 && (
-								<Button
-									renderRoot={(props) => (
-										<Link
-											{...props}
-											to="/sets/$setId/study"
-											params={{ setId: String(setId) }}
-										/>
-									)}
-									variant="filled"
-									leftSection={<GraduationCap size={16} aria-hidden="true" />}
-								>
-									Study
-								</Button>
-							)}
-						</Group>
-					)}
-				</Group>
+  return (
+    <AppLayout active="home">
+      <div className="sp-page">
+        <div className="sp-topbar">
+          <Link to="/" className="sp-btn">
+            <ArrowLeft size={16} aria-hidden="true" /> Back
+          </Link>
+          {set && userId && set.ownerId !== userId && (
+            <button type="button" className="sp-btn sp-btn-primary" disabled={copying} onClick={() => void copyToMySets()}>
+              <Copy size={16} aria-hidden="true" /> {copying ? "Copying…" : "Copy to my sets"}
+            </button>
+          )}
+          {set && (set.ownerId === userId || set.canStudy) && (
+            <div className="sp-actions">
+              {set.ownerId === userId && (
+                <Link to="/sets/$setId/edit" params={{ setId: String(setId) }} className="sp-btn">
+                  <Pencil size={16} aria-hidden="true" /> Edit
+                </Link>
+              )}
+              {set.canStudy && set.cards.length > 0 && (
+                <Link to="/sets/$setId/study" params={{ setId: String(setId) }} className="sp-btn sp-btn-primary">
+                  <GraduationCap size={16} aria-hidden="true" /> Study
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
 
 				{failed ? (
 					<PageMessage role="alert">

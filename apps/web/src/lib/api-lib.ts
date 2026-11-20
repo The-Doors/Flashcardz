@@ -96,26 +96,41 @@ async function authorizedRequest() {
 export function isQuizletSetUrl(source: string) {
 	try {
 		const url = new URL(source.trim());
-		return source.trim().length <= 2048 && url.protocol === "https:"
-			&& ["quizlet.com", "www.quizlet.com"].includes(url.hostname)
-			&& !url.username && !url.password && !url.port
-			&& /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?[1-9][0-9]*(?:\/|$)/.test(url.pathname);
+		return (
+			source.trim().length <= 2048 &&
+			url.protocol === "https:" &&
+			["quizlet.com", "www.quizlet.com"].includes(url.hostname) &&
+			!url.username &&
+			!url.password &&
+			!url.port &&
+			/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?[1-9][0-9]*(?:\/|$)/.test(url.pathname)
+		);
 	} catch {
 		return false;
 	}
 }
 
 export async function importQuizletSet(source: string) {
-	const response = await quizletImport({ source: source.trim() }, await authorizedRequest());
+	const response = await quizletImport(
+		{ source: source.trim() },
+		await authorizedRequest(),
+	);
 	if (response.status !== 202)
-		throw new Error(response.data.message || "Could not start the Quizlet import. Try again.");
+		throw new Error(
+			response.data.message || "Could not start the Quizlet import. Try again.",
+		);
 	return response.data;
 }
 
 export async function loadImportJob(jobId: number, signal?: AbortSignal) {
-	const response = await jobsShow(jobId, { ...await authorizedRequest(), signal });
+	const response = await jobsShow(jobId, {
+		...(await authorizedRequest()),
+		signal,
+	});
 	if (response.status !== 200)
-		throw new Error(response.data.message || "Could not check the import status.");
+		throw new Error(
+			response.data.message || "Could not check the import status.",
+		);
 	return response.data;
 }
 
@@ -152,13 +167,15 @@ export async function loadSet(setId: number): Promise<SetDetails | null> {
 		lastPage = result.last_page;
 	}
 
+	// The show endpoint adds can_study to the deck, which the generator types as a plain array.
+	const details = deck.data as unknown as Deck & { can_study?: boolean };
 	return {
-		id: deck.data.id,
-		ownerId: deck.data.user_id,
-		canStudy: (deck.data as { can_study?: boolean }).can_study ?? false,
-		name: deck.data.name,
-		description: deck.data.description,
-		isPublic: deck.data.is_public,
+		id: details.id,
+		ownerId: details.user_id,
+		canStudy: details.can_study ?? false,
+		name: details.name,
+		description: details.description,
+		isPublic: details.is_public,
 		cards: cards
 			.sort((a, b) => a.id - b.id)
 			.map((card) => parseCard(card.id, card.content)),

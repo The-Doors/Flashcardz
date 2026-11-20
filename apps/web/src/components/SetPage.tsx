@@ -57,6 +57,64 @@ export default function SetPage({ setId }: { setId: number }) {
 		};
 	}, [setId, userId]);
 
+<<<<<<< HEAD
+	return (
+		<AppLayout active="home">
+			<PageLayout>
+				<Group justify="space-between" gap={16}>
+					<Button
+						variant="default"
+						renderRoot={(props) => <Link {...props} to="/" />}
+						leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+					>
+						Back
+					</Button>
+					{set && userId && set.ownerId !== userId && (
+						<Button
+							type="button"
+							loading={copying}
+							onClick={() => void copyToMySets()}
+							leftSection={<Copy size={16} aria-hidden="true" />}
+						>
+							{copying ? "Copying…" : "Copy to my sets"}
+						</Button>
+					)}
+					{set && (set.ownerId === userId || set.canStudy) && (
+						<Group gap={10}>
+							{set.ownerId === userId && (
+								<Button
+									variant="default"
+									renderRoot={(props) => (
+										<Link
+											{...props}
+											to="/sets/$setId/edit"
+											params={{ setId: String(setId) }}
+										/>
+									)}
+									leftSection={<Pencil size={16} aria-hidden="true" />}
+								>
+									Edit
+								</Button>
+							)}
+							{set.canStudy && set.cards.length > 0 && (
+								<Button
+									renderRoot={(props) => (
+										<Link
+											{...props}
+											to="/sets/$setId/study"
+											params={{ setId: String(setId) }}
+										/>
+									)}
+									variant="filled"
+									leftSection={<GraduationCap size={16} aria-hidden="true" />}
+								>
+									Study
+								</Button>
+							)}
+						</Group>
+					)}
+				</Group>
+=======
   return (
     <AppLayout active="home">
       <div className="sp-page">
@@ -84,6 +142,7 @@ export default function SetPage({ setId }: { setId: number }) {
             </div>
           )}
         </div>
+>>>>>>> ef5e4db6b299e86f0dd77aa4843bd3a874992ac7
 
 				{failed ? (
 					<PageMessage role="alert">

@@ -1,8 +1,25 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   frontend:
     image: ghcr.io/${GHCR_OWNER:-the-doors}/flashcardz-frontend:${IMAGE_TAG:-latest}
     ports:
       - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-cardz.cards}
+      SUPABASE_DOMAIN: ${SUPABASE_DOMAIN:-supabase.cardz.cards}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - default
+      - supabase
+    logging: *logging
     depends_on:
       web:
         condition: service_healthy
@@ -17,6 +34,7 @@ services:
     expose:
       - "3000"
     restart: unless-stopped
+    logging: *logging
 
   backend:
     image: ghcr.io/${GHCR_OWNER:-the-doors}/flashcardz-backend:${IMAGE_TAG:-latest}
@@ -24,8 +42,10 @@ services:
       - .env
     expose:
       - "8000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - supabase
+    logging: *logging
     volumes:
       - api-storage:/app/storage
     init: true
@@ -47,8 +67,10 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - supabase
+    logging: *logging
     volumes:
       - api-storage:/app/storage
     init: true
@@ -57,3 +79,10 @@ services:
 
 volumes:
   api-storage:
+  caddy-data:
+  caddy-config:
+
+networks:
+  supabase:
+    external: true
+    name: flashcardz-supabase

@@ -34,11 +34,11 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
 
 CMD ["node", ".output/server/index.mjs"]
 
-FROM nginx:alpine AS proxy
+FROM caddy:2.11.9-alpine AS proxy
 
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/Caddyfile /etc/caddy/Caddyfile
 
-EXPOSE 80
+EXPOSE 80 443
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -q -O /dev/null http://127.0.0.1/
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz

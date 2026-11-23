@@ -1,6 +1,7 @@
 name: Build and Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -52,7 +53,7 @@ jobs:
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-web:latest
             ghcr.io/${{ steps.owner.outputs.OWNER }}/flashcardz-web:${{ github.sha }}
 
-      - name: Build and push Nginx
+      - name: Build and push HTTPS proxy
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -92,7 +93,7 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
-          source: docker-compose.yml
+          source: docker-compose.yml,supabase/production/compose.sh,supabase/production/compose.override.yml,supabase/production/setup.sh,supabase/production/.env.example
           target: my-app
 
       - name: Deploy to Ubuntu VM
@@ -102,11 +103,18 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           envs: GHCR_OWNER,IMAGE_TAG
+          command_timeout: 20m
           script: |
             set -eu
             cd ~/my-app
+            # Bootstrap Supabase manually once; regular app releases never upgrade it.
+            bash supabase/production/compose.sh config --quiet
+            bash supabase/production/compose.sh exec -T db pg_isready -U postgres
+            bash supabase/production/compose.sh exec -T auth wget -q -O /dev/null http://127.0.0.1:9999/health
             docker compose config --quiet
             docker compose pull
             docker compose run --rm --no-deps backend php artisan migrate --force --no-interaction
             docker compose up -d --remove-orphans --wait --wait-timeout 120
+            curl --fail --silent --show-error --max-time 15 --retry 12 --retry-connrefused --retry-delay 5 https://cardz.cards/up
+            curl --fail --silent --show-error --max-time 15 --retry 12 --retry-connrefused --retry-delay 5 https://supabase.cardz.cards/auth/v1/.well-known/jwks.json
             docker image prune -f

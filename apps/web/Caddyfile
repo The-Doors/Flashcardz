@@ -1,0 +1,25 @@
+{$APP_DOMAIN:cardz.cards} {
+	encode zstd gzip
+	@api path /api/* /up
+	handle @api {
+		reverse_proxy backend:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+{$SUPABASE_DOMAIN:supabase.cardz.cards} {
+	@api path /auth/v1/* /rest/v1/* /realtime/v1/* /storage/v1/* /functions/v1/* /graphql/v1
+	handle @api {
+		reverse_proxy api-gw:8000
+	}
+	# Studio and management endpoints are available only through an SSH tunnel.
+	handle {
+		respond 404
+	}
+}
+
+http://:8080 {
+	respond /healthz 200
+}

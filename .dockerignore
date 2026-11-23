@@ -20,3 +20,6 @@ apps/api/public/hot
 apps/api/public/storage
 .git
 .crush
+supabase/production/upstream
+supabase/production/backups
+supabase/production/.init.*

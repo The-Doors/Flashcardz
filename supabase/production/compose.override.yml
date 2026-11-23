@@ -1,0 +1,49 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  api-gw:
+    ports: !override
+      - "127.0.0.1:8000:8000"
+    logging: *logging
+  db:
+    logging: *logging
+  supavisor:
+    ports: !reset []
+    logging: *logging
+  studio:
+    logging: *logging
+  auth:
+    environment:
+      GOTRUE_JWT_KEYS: ${JWT_KEYS:?Run setup.sh first}
+      GOTRUE_MAILER_SECURE_EMAIL_CHANGE_ENABLED: "true"
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_SECRET:-}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL}/callback
+    logging: *logging
+  rest:
+    logging: *logging
+  realtime:
+    environment:
+      API_JWT_JWKS: ${JWT_JWKS:?Run setup.sh first}
+    logging: *logging
+  storage:
+    environment:
+      JWT_JWKS: ${JWT_JWKS:?Run setup.sh first}
+    logging: *logging
+  imgproxy:
+    logging: *logging
+  meta:
+    logging: *logging
+  functions:
+    environment:
+      SUPABASE_JWKS: ${JWT_JWKS:?Run setup.sh first}
+    logging: *logging
+
+networks:
+  default:
+    name: flashcardz-supabase
